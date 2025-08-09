@@ -1,0 +1,54 @@
+function p_rx_dbm = linkBudget(p_tx_dbm, f_c, nElem, sep_dist, distance, l_abs, d, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, surf_rms)
+    % LINKBUDGET (insert description)
+    %
+    % Input:
+    %   p_tx_dbm   [dBm]     
+    %   f_c        [Hz]     
+    %   distance   [m]             
+    %   d = GS dish diameter [m]
+    %   offAxisError = pointing error of GS dish [degrees]
+    %   gs_polarization = polarization type of GS ('circular' or 'linear')....the satellite is assumed to be linear
+    %   pAngle = polarization angle between the tx and rx (degrees)
+    %   l_abs (atmospheric absorption loss)     [dB]           
+    %   surf_rms    [um] 
+    %   Output:
+    %   p_rx_dbm   [dBm]
+    
+    % Constants
+     c = physconst('LightSpeed');
+     lambda = c ./ f_c;
+
+    % Antenna Directivity (100% efficiency Gain) Calculations
+    g_satAnt = 4.*pi.*(sep_dist).^2./lambda; %assumes negligble thickness of horn so that adj. horn separation distance = horn aperature length and width dimensions
+    g_gsAnt = (d./lambda).^2;
+
+    % GS Dish surface roughness loss (Ruze formula)
+    surface_efficiency = exp(-1 * (4 * pi * (surf_rms * 1e-6) ./ lambda).^2);
+    %l_rms = 10 * log10(surface_efficiency); % in dB
+
+    % Effective Antenna Gain Calculations (including inefficiency) in dBi
+    geff_satAnt = 10.*log10(g_satAnt)
+    geff_gsAnt = 10.*log10(g_gsAnt * surface_efficiency);
+
+    % Spreading loss
+    l_spr = 20*log10(distance * 1e-3) + 20*log10(f_c * 1e-9) + 92.45;
+
+    % Pointing loss
+    satHPBW = (50.8 .* lambda) ./ (nElem*sep_dist); %taken from payload calculations
+    gsHPBW = (70 * (lambda ./ d)); %confirm! (added *2 part after FEKO sims)
+    sat_ptg_loss = 12.*((sat_offAxisAngle./ satHPBW).^2); %ITU-R BO.790 (page 3)
+    gs_ptg_loss = 12.*((gs_offAxisAngle ./ gsHPBW).^2); %ITU-R BO.790 (page 3) 
+    l_ptg = gs_ptg_loss + sat_ptg_loss;
+    
+
+    % Polarization loss facotr (PLF)
+    switch gs_polarization
+        case 'linear'
+            l_plf = (cosd(pAngle).^2);
+        otherwise
+            l_plf = 3;
+    end
+
+    p_rx_dbm = p_tx_dbm + geff_satAnt + geff_gsAnt - l_spr - l_abs - l_ptg - l_plf ;
+end
+

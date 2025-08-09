@@ -1,0 +1,36 @@
+clear, clc, close all;
+addpath(genpath('./functions'));
+
+% Define height vector from 0 to 100 km in 1 km steps
+h = 0:1:100;
+atm = "globalAnnual";
+
+% Call the atmospheric profile function
+[T, P, e] = atmProfile(h, atm);
+
+% Compute geopotential height
+hh = 6356.766 * h ./ (6356.766 + h);
+
+% Define ranges (same as inside atmProfile)
+ranges = {
+    hh >= 0       & hh <= 11,       '0–11 km';
+    hh >  11      & hh <= 20,       '11–20 km';
+    hh >  20      & hh <= 32,       '20–32 km';
+    hh >  32      & hh <= 47,       '32–47 km';
+    hh >  47      & hh <= 51,       '47–51 km';
+    hh >  51      & hh <= 71,       '51–71 km';
+    hh >  71      & hh <= 84.852,   '71–84.85 km';
+    hh >  84.852  & hh <= 89.716,   '84.85–89.72 km';
+    hh >  89.716  & hh <= 98.452,   '89.72–98.45 km'
+};
+
+% Loop through and display data for each range
+for k = 1:size(ranges, 1)
+    idx = find(ranges{k,1});
+    label = ranges{k,2};
+    fprintf('\nRange %s:\n', label);
+    fprintf('  Height (km):   %s\n', mat2str(h(idx)));
+    fprintf('  Temp   (K):    %s\n', mat2str(T(idx), 4));
+    fprintf('  Pressure (hPa):%s\n', mat2str(P(idx), 4));
+    fprintf('  Vapor P (hPa): %s\n', mat2str(e(idx), 4));
+end
