@@ -22,7 +22,7 @@ pol_angle = 0;              % linspace(0,180,360); %[degrees] this is used only 
 D = 1.5;                    % [m] diameter of GS dish
 gs_ptg_error = 0.01;        % [degree] of axis angle of ground station
 sat_ptg_error = 0.1;        % [degree] of axis angle of satellite (Albert said to go with 0.1)
-surface_rms = 100;           % [um] rms surface roughness (typ industry standards aim for 7 times smaller than wavelength which for 225 GHz is about 190 um!)
+surface_rms = 50;           % [um] rms surface roughness (typ industry standards aim for 7 times smaller than wavelength which for 225 GHz is about 190 um!)
 
 
 % ---- GS Location Geometry parameters ----
@@ -47,7 +47,7 @@ atmTypes = ["Summer 45", "Winter 45", "Annual 15", "InterpWinter", "InterpSummer
 [gs_w, ~, ~] = InterpAtm({T1, P1, e1}, {T2W, P2W, e2W}, gs_lat);
 
 %gs_temp = max(gs_s,gs_w);             % [Kelvin] temperature (results in gs_temp = 295.2696)
-BW = 0.01e9;            % [Hz] bandwidth (2 GHz max, but smaller BW correlates with less noise. looking at 100 MHz and 10 MHz as well thus)
+BW = 0.01e9;            % [Hz] bandwidth
 NF = 7;                % [dB] Noise Figure
 SNR_req = 3;           % [dB] minimum SNR necessary to reliably detect signal (aka link margin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,11 +65,11 @@ surface_efficiency = exp(-1 * (4 * pi * (surface_rms * 1e-6) ./ lambda).^2);
 %l_rms = 10 * log10(surface_efficiency); % in dB
 
 % Effective Antenna Gain Calculations (including inefficiency) in dBi
-otherSat_efficiencies = 0.68; %placeholder (0.68 correlates with 44.0345) 
+otherSat_efficiencies = 0.99; %placeholder
 otherGS_efficiencies = 0.7;  %placeholder
 
 geff_satAnt = 10.*log10(g_satAnt.*otherSat_efficiencies)
-geff_gsAnt = 10.*log10(g_gsAnt * surface_efficiency.*otherGS_efficiencies);
+geff_gsAnt = 10.*log10(g_gsAnt * surface_efficiency.*otherGS_efficiencies)
 
 
 % ---- Noise Calculations ----
