@@ -17,12 +17,12 @@ distElem = 0.0045;          % [m] 4.93651802mm ish for center to center
 %geff_gsAnt = 65;           % [dBi] optionally can use set value and comment out calculation of this below 
 freq = 225;                 % [GHz]
 freq_Hz = freq * 1e9;       % [Hz]
-gs_pol_type = 'circular';   % polarization of GS antenna (either circular or linear <<lowercase)
+gs_pol_type = 'linear';   % polarization of GS antenna (either circular or linear <<lowercase)
 pol_angle = 0;              % linspace(0,180,360); %[degrees] this is used only when gs_pol_type is linear 
 D = 1.5;                    % [m] diameter of GS dish
 gs_ptg_error = 0.01;        % [degree] of axis angle of ground station
 sat_ptg_error = 0.1;        % [degree] of axis angle of satellite (Albert said to go with 0.1)
-surface_rms = 100;           % [um] rms surface roughness (typ industry standards aim for 7 times smaller than wavelength which for 225 GHz is about 190 um!)
+surface_rms = 76.2;           % [um] rms surface roughness (typ industry standards aim for 7 times smaller than wavelength which for 225 GHz is about 190 um! m2inc can do 0.003 inches so about 76.2 um)
 
 
 % ---- GS Location Geometry parameters ----
@@ -47,7 +47,7 @@ atmTypes = ["Summer 45", "Winter 45", "Annual 15", "InterpWinter", "InterpSummer
 [gs_w, ~, ~] = InterpAtm({T1, P1, e1}, {T2W, P2W, e2W}, gs_lat);
 
 %gs_temp = max(gs_s,gs_w);             % [Kelvin] temperature (results in gs_temp = 295.2696)
-BW = 0.01e9;            % [Hz] bandwidth (2 GHz max, but smaller BW correlates with less noise. looking at 100 MHz and 10 MHz as well thus)
+BW = 0.01e9;           % [Hz] bandwidth (2 GHz max, but smaller BW correlates with less noise. looking at 100 MHz and 10 MHz as well thus)
 NF = 7;                % [dB] Noise Figure
 SNR_req = 3;           % [dB] minimum SNR necessary to reliably detect signal (aka link margin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -61,7 +61,7 @@ g_satAnt = (4.*pi.*(distElem.^2)./(lambda.^2)).*numElem.*numElem; %assumes squar
 g_gsAnt = (pi.*D./lambda).^2;
 
 % GS Dish surface roughness loss (Ruze formula)
-surface_efficiency = exp(-1 * (4 * pi * (surface_rms * 1e-6) ./ lambda).^2);
+surface_efficiency = exp(-1 * (4 * pi * (surface_rms * 1e-6) ./ lambda).^2)
 %l_rms = 10 * log10(surface_efficiency); % in dB
 
 % Effective Antenna Gain Calculations (including inefficiency) in dBi
