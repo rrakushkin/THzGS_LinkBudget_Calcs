@@ -10,10 +10,10 @@ T0      = 290;
 c       = physconst('LightSpeed');
 
 % ---- Link budget params ----
-sat_tx        = 25;        % [dBm]
+sat_tx        = 23;        % [dBm]
 geff_satAnt   = 44;        % [dBi]
 %geff_gsAnt    = 65;        % [dBi]
-directivity_gsAnt = 60:2:70;   % [dBi]
+directivity_gsAnt = 61:2:75;   % [dBi]
 numElem       = 16;       % satellite array (num per length)
 distElem      = 0.0045;    % [m]
 D             = 1.5;       % [m]
@@ -24,12 +24,12 @@ gs_pol_type   = 'linear';
 pol_angle     = 45;        % [deg]
 gs_ptg_error  = 0.01;      % [deg]
 sat_ptg_error = 0.1;       % [deg]
-targetBER     = 10e-4;
+targetBER     = 1e-4;
 rolloff       = 0.3;
 
 % ---- Geometry ----
 HOSL = 37e-3;              % [km] (GS height above sea level)
-alt  = 420;                % [km] 
+alt  = 460;                % [km] 
 Elev = linspace(0,90,100); % [deg]
 
 % ---- Atmospheres ----
@@ -67,11 +67,11 @@ Tsys_s = (10^(NF/10)-1)*T0 + gs_s;
 
 % Slant range (km->m)
 Re          = 6371;
-GS_pos      = Re + HOSL;
-slant_dist  = sqrt(GS_pos.^2 .* sind(Elev).^2 + 2*GS_pos*alt + alt.^2) ...
-              - GS_pos .* sind(Elev);                     % [km]
-slant_dist_m = slant_dist.*1e3;                            % [m]
-
+GS_pos      = Re + HOSL
+GS_pos_m      = GS_pos*1e3
+alt_m = alt*1e3
+slant_dist_m  = sqrt(GS_pos_m.^2 .* sind(Elev).^2 + 2*GS_pos_m*alt_m + alt_m.^2) ...
+              - GS_pos_m .* sind(Elev)                     % [m]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % FORMATTING
@@ -80,7 +80,7 @@ hold on
 xlabel('Elevation Angle [deg]');
 ylabel('LinkMargin [dBm]');
 title(sprintf('Link Margin vs Elevation Angle at %.0f GHz', freq));
-xlim([10,90]); ylim([-80,25]); 
+xlim([10,90]); ylim([-40,100]); 
 grid on;
 legend;
 

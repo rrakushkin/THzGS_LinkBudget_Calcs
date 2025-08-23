@@ -3,7 +3,7 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     %
     % Input:
     %   p_tx_dbm   [dBm]     
-    %   f_c        [Hz] centers between horns distance
+    %   f_c        [Hz] 
     %   sep_dist    [m]
     %   distance   [m]             
     %   d = GS dish diameter [m]
@@ -34,11 +34,12 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     % Polarization loss facotr (PLF)
     switch gs_polarization
         case 'linear'
-            l_plf = (cosd(pAngle).^2);
+            l_plf = 10*log10((cosd(pAngle)).^2)
         otherwise
-            l_plf = 3;
+            l_plf = -3
     end
     %disp(l_spr)
-    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs - l_ptg - l_plf;
+    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs - l_ptg + l_plf;
+
 end
 

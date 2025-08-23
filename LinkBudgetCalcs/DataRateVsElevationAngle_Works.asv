@@ -23,9 +23,9 @@ freq          = 225;       % [GHz]
 freq_Hz       = freq * 1e9;
 gs_pol_type   = 'linear';
 pol_angle     = 45;        % [deg]
-gs_ptg_error  = 0.01;      % [deg]
-sat_ptg_error = 0.10;       % [deg]
-targetBER     = 1e-4;
+gs_ptg_error  = 0.10;      % [deg]
+sat_ptg_error = 0.;       % [deg]
+targetBER     = 10e-4;
 rolloff       = 0.3;
 maxRs = 2e9
 NF = 7
@@ -37,13 +37,13 @@ handles = [];
 
 % ---- Geometry ----
 HOSL = 37e-3;              % [km] (GS height above sea level)
-alt  = 460;                % [km] 
+alt  = 400;                % [km] 
 Elev = linspace(0,90,100); % [deg]
 
 % ---- Atmospheres ----
 hstep    = 0.1;            % [km]
 gs_lat   = 42.3378054237531;
-atmType = "InterpSummer"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer", "globalAnnual"];
+atmType = "globalAnnual"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer", "globalAnnual"];
 
 elevAngle = linspace(0, 90);
 Re_m = Re*1000
