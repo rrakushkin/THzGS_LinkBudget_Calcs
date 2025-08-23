@@ -24,7 +24,7 @@ gs_pol_type   = 'linear';
 pol_angle     = 0;        % [deg]
 gs_ptg_error  = 0.0;      % [deg]
 sat_ptg_error = 0.0;       % [deg]
-targetBER     = 1e-5;
+targetBER     = 10e-4;
 rolloff       = 0.3;
 
 % ---- Geometry ----
@@ -88,7 +88,8 @@ legend;
 % MAIN LOOP (per atmosphere)
 
 % HPBW estimate from directivity
-GS_HPBW = (directivity_gsAnt * 41253).^(0.5);
+Dlin     = 10.^(directivity_gsAnt/10);
+GS_HPBW  = sqrt(41253 ./ Dlin);   % degrees
 
 for k = 1:numel(directivity_gsAnt)
 
@@ -109,9 +110,9 @@ for k = 1:numel(directivity_gsAnt)
 
      % Noise floor (dBm), SNR, Eb/N0, Link Margin
      Tsys= Tsys_s;
-     Pnf_dBm    = 10*log10(K_boltz*Tsys*BW*1e3);        % dBm
-     snr_dB     = p_rx - Pnf_dBm;                         % dB
-     EbNo_dB    = snr_dB + 10*log10((1+rolloff)/b);       % dB
+     Pnf_dB    = 10*log10(K_boltz*Tsys*BW);        % dB
+     snr_dB     = p_rx - 30 - Pnf_dB;                         % dB
+     EbNo_dB    = snr_dB - 10*log10((1+rolloff)/b);       % dB
      linkMargin = EbNo_dB - EbNo_min_dB;                  % dB
 
     % ---------- Figure 1: plot link margin for each gain value ----------

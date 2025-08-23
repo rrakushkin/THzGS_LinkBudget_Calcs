@@ -1,66 +1,87 @@
-clear, clc;
+clear, clc, close all;
 addpath(genpath('./functions'));
 
 % Constants
-k = physconst('boltzman');
-Re = physconst('earthRadius');
+k = physconst('boltzman')
+Re = 6371
 
-%  Parameters
-LinkParams.fc = 225e9;
-LinkParams.maxRs = 2e9;
-LinkParams.PtxDBm = 25;
-LinkParams.Gsat = 44;
-LinkParams.Ggs = 65;
-LinkParams.nfdb = 7;
-LinkParams.targetBER = 10e-4; %was 1e4 befrore but min success specifies 10e-4
-LinkParams.rolloff = 0.3;
-LinkParams.LinkMargin = 3;
-LinkParams.OrbitalAltitude = 400e3;
+% ---- Constants ----
+K_boltz = physconst('boltzman');
+T0      = 290;
+c       = physconst('LightSpeed');
+
+% ---- Link budget params ----
+sat_tx        = 25;        % [dBm]
+geff_satAnt   = 44;        % [dBi]
+%geff_gsAnt    = 65;        % [dBi]
+directivity_gsAnt = 60:2:70;   % [dBi]
+numElem       = 16;       % satellite array (num per length)
+distElem      = 0.0045;    % [m]
+D             = 1.5;       % [m]
+%surface_rms   = 100;       % [um]
+freq          = 225;       % [GHz]
+freq_Hz       = freq * 1e9;
+gs_pol_type   = 'linear';
+pol_angle     = 0;        % [deg]
+gs_ptg_error  = 0.0;      % [deg]
+sat_ptg_error = 0.0;       % [deg]
+targetBER     = 10e-4;
+rolloff       = 0.3;
+maxRs = 2e9
+nfdb = 7
+LinkMargin = 3
 Data = [];
 BwData = [];
-
-linestyles = {'-', '--', ':'};
-markers = {'o', 'diamond', '^', 'v'};
-colors = {'#D95319','#0072BD', '#77AC30', '#A2142F'}; % {Orange, Blue, Green, Red}
 handles = [];
-markEvery = 12;
-offset = 6;
-linewidth=2;
+
+
+% ---- Geometry ----
+HOSL = 37e-3;              % [km] (GS height above sea level)
+alt  = 420;                % [km] 
+Elev = linspace(0,90,100); % [deg]
+
+% ---- Atmospheres ----
+hstep    = 0.1;            % [km]
+gs_lat   = 42.3378054237531;
+atmType = "InterpSummer"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer"];
 
 elevAngle = linspace(0, 90);
-slantPathDistance = sqrt((Re+LinkParams.OrbitalAltitude)^2 ...
+slantPathDistance = (sqrt((Re+alt)^2 ...
                     -Re^2.*cosd(elevAngle).^2) ...
-                    - Re.*sind(elevAngle);
+                    - Re.*sind(elevAngle))*1e3;
 
 % Link Budget
-labs = absLossSlant(LinkParams.OrbitalAltitude * 1e-3, LinkParams.fc * 1e-9, elevAngle, 0.1, 0, "globalAnnual");
-labs = labs(1,:);
-%p_rx_dbm = linkBudget(LinkParams.PtxDBm, LinkParams.Gsat, LinkParams.Ggs, LinkParams.fc, slantPathDistance, 0)-labs;
-p_rx_dbm =  linkBudget1(23,44, 65, 0.05, 225e9, 16, 0045, slantPathDistance, labs, 0.1, 0.01, 'linear', 0);
+% Atmosphere loss (function assumes altitude is in km already and f in GHz)
+labs3d = absLossSlant(alt, freq, elevAngle, 0.1, 0, atmType, gs_lat);
+labs   = squeeze(labs3d(1,1,:)).';   % 1×N row vector over elevation angles
+
+p_rx_dbm = linkBudget1(23,44, 65, 0.05, 225e9, 16, 0.0045, slantPathDistance, labs, 0.1, 0.01, 'linear', 45)
+
 % System Noise Temperature
 Ta = 300;                           % [K] Antenna noise temperature when pointing at the Earth (Worst case)
 T0 = 290;                           % [K] Reference noise temperature
-Te = (10^(LinkParams.nfdb/10)-1)*T0;% [K] Receiver equivalent noise temperature = (F-1)T0
+Te = (10^(nfdb/10)-1)*T0;% [K] Receiver equivalent noise temperature = (F-1)T0
 T_sys = (Ta + Te);                  % [K] System noise temperature
-
-figure
 
 %% Data rate
 % BPSK
 M = 2;
 b = log2(M);
 % Find EbNo for the desired BER
-BER_function = @(EbNo_dB) berawgn(EbNo_dB, "psk", M, "nondiff") - LinkParams.targetBER;
+BER_function = @(EbNo_dB) berawgn(EbNo_dB, "psk", M, "nondiff") - targetBER;
 initial_guess = 10; % Initial guess in dB
 EbNo_dB = fzero(BER_function, initial_guess);
 % "Converting" EbNo to SNR based on BW, baudrate, and bit-rate
-SNR_min_db = EbNo_dB + 10*log10(b/(1+LinkParams.rolloff));
+SNR_min_db = EbNo_dB + 10*log10(b/(1+rolloff));
 % Find allowable bandwidth given noise figure (30 for converting dBm to dB)
-N = p_rx_dbm - 30 - SNR_min_db - LinkParams.LinkMargin;
-Bw = 10.^(N/10)/k/T_sys;
-Bw = min(Bw, LinkParams.maxRs*(1+LinkParams.rolloff));
-dataRate = Bw * b / (1 + LinkParams.rolloff);
-h = plot(elevAngle, dataRate * 1e-9, 'Color', colors{1}, 'LineWidth', linewidth);
+N = p_rx_dbm - 30 - SNR_min_db - LinkMargin;
+Bwa = 10.^(N/10)/k/T_sys
+Bwb = maxRs*(1+rolloff)
+Bw = min(Bwa,Bwb)
+dataRate = Bw * b / (1 + rolloff);
+
+figure
+h = plot(elevAngle, dataRate * 1e-9);
 Data = [Data; dataRate];
 BwData = [BwData; Bw];
 handles = [handles h];
@@ -71,110 +92,21 @@ for e = 0:10:90
     %sprintf('Rb = {%d}\n', dataRate(i).*1e-6)
 end
 
-hold on;
 
-% QPSK
-M = 4;
-b = log2(M);
-% Find EbNo for the desired BER
-BER_function = @(EbNo_dB) berawgn(EbNo_dB, "psk", M, "nondiff") - LinkParams.targetBER;
-initial_guess = 10; % Initial guess in dB
-EbNo_dB = fzero(BER_function, initial_guess);
-% Find minimum SNR 
-SNR_min_db = EbNo_dB + 10*log10(b/(1+LinkParams.rolloff));
-% Find allowable bandwidth given noise figure
-N = p_rx_dbm - 30 - SNR_min_db - LinkParams.LinkMargin;
-Bw = 10.^(N/10)/k/T_sys;
-Bw = min(Bw, LinkParams.maxRs*(1+LinkParams.rolloff));
-dataRate = Bw * b / (1 + LinkParams.rolloff);
-h = plot(elevAngle, dataRate * 1e-9, 'Color', colors{2}, 'LineWidth',linewidth, 'LineStyle', '-');
-Data = [Data; dataRate];
-BwData = [BwData; Bw];
-handles = [handles h];
-
-% 8PSK
-M = 8;
-b = log2(M);
-% Find EbNo for the desired BER
-BER_function = @(EbNo_dB) berawgn(EbNo_dB, "psk", M, "nondiff") - LinkParams.targetBER;
-initial_guess = 10; % Initial guess in dB
-EbNo_dB = fzero(BER_function, initial_guess);
-% Find minimum SNR 
-SNR_min_db = EbNo_dB + 10*log10(b/(1+LinkParams.rolloff));
-% Find allowable bandwidth given noise figure
-N = p_rx_dbm - 30 - SNR_min_db - LinkParams.LinkMargin;
-Bw = 10.^(N/10)/k/T_sys;
-Bw = min(Bw, LinkParams.maxRs*(1+LinkParams.rolloff));
-dataRate = Bw * b / (1 + LinkParams.rolloff);
-h = plot(elevAngle, dataRate * 1e-9, 'Color', colors{3}, 'LineWidth', linewidth);
-Data = [Data; dataRate];
-BwData = [BwData; Bw];
-handles = [handles h];
-
-% 16PSK
-M = 16;
-b = log2(M);
-% Find EbNo for the desired BER
-BER_function = @(EbNo_dB) berawgn(EbNo_dB, "psk", M, "nondiff") - LinkParams.targetBER;
-initial_guess = 10; % Initial guess in dB
-EbNo_dB = fzero(BER_function, initial_guess);
-% Find minimum SNR 
-SNR_min_db = EbNo_dB + 10*log10(b/(1+LinkParams.rolloff));
-% Find allowable bandwidth given noise figure
-N = p_rx_dbm - 30 - SNR_min_db - LinkParams.LinkMargin;
-Bw = 10.^(N/10)/k/T_sys;
-Bw = min(Bw, LinkParams.maxRs*(1+LinkParams.rolloff));
-dataRate = Bw * b / (1 + LinkParams.rolloff);
-h = plot(elevAngle, dataRate * 1e-9, 'Color', colors{4}, 'LineWidth',linewidth);
-Data = [Data; dataRate];
-BwData = [BwData; Bw];
-handles = [handles h];
-
-labels = {'BPSK', 'QPSK', '8PSK', '16PSK'};
-hlgd = legend(handles, labels, 'Location', 'northwest','AutoUpdate', 'on');
-
-% Markers on top of lines
-scatter(elevAngle(offset:markEvery:end),Data(1, offset:markEvery:end) * 1e-9,100, 'Marker', markers{1}, 'MarkerFaceColor',colors{1}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-scatter(elevAngle(1:markEvery:end),Data(2, 1:markEvery:end) * 1e-9,100, 'Marker', markers{2}, 'MarkerFaceColor',colors{2}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-scatter(elevAngle(1:markEvery:end),Data(3, 1:markEvery:end) * 1e-9,100, 'Marker', markers{3}, 'MarkerFaceColor',colors{3}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-scatter(elevAngle(1:markEvery:end),Data(4, 1:markEvery:end) * 1e-9,100, 'Marker', markers{4}, 'MarkerFaceColor',colors{4}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-
-grid on;
+grid on
 xlabel('Elevation Angle [deg]')
 ylabel('Achievable Bit Rate R_b [Gbps]')
 xlim([0, 90])
 xticks(0:10:90)
-% xline(10:10:80, LineStyle='--', Color='k')
-% ylim([0, 10])
-% yscale('log')
 
-%% Bandwidth
-figure 
+
+%% Bandwidth 
 
 % BPSK
-h = plot(elevAngle, BwData(1,:) * 1e-9, 'Color', colors{1}, 'LineWidth', linewidth);
+figure
+h = plot(elevAngle, BwData(1,:) * 1e-9);
 
-hold on;
-
-% QPSK
-h = plot(elevAngle, BwData(2,:) * 1e-9, 'Color', colors{2}, 'LineWidth', linewidth);
-
-% 8PSK
-h = plot(elevAngle, BwData(3,:) * 1e-9, 'Color', colors{3}, 'LineWidth', linewidth);
-
-% 16PSK
-h = plot(elevAngle, BwData(4,:) * 1e-9, 'Color', colors{4}, 'LineWidth', linewidth);
-
-labels = {'BPSK', 'QPSK', '8PSK', '16PSK'};
-legend(handles, labels, 'Location', 'northwest','AutoUpdate', 'off');
-
-% Markers on top of lines
-scatter(elevAngle(1:markEvery:end),BwData(1, 1:markEvery:end) * 1e-9,100, 'Marker', markers{1}, 'MarkerFaceColor',colors{1}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-scatter(elevAngle(1:markEvery:end),BwData(2, 1:markEvery:end) * 1e-9,100, 'Marker', markers{2}, 'MarkerFaceColor',colors{2}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-scatter(elevAngle(1:markEvery:end),BwData(3, 1:markEvery:end) * 1e-9,100, 'Marker', markers{3}, 'MarkerFaceColor',colors{3}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-scatter(elevAngle(1:markEvery:end),BwData(4, 1:markEvery:end) * 1e-9,100, 'Marker', markers{4}, 'MarkerFaceColor',colors{4}, 'MarkerEdgeColor', 'k', 'LineWidth', 1.5)
-
-grid on;
+grid on
 xlabel('Elevation angle [deg]')
 ylabel('Allowable Bandwidth B [GHz]')
 xlim([0, 90])
