@@ -22,13 +22,13 @@ D             = 1.5;       % [m]
 freq          = 225;       % [GHz]
 freq_Hz       = freq * 1e9;
 gs_pol_type   = 'linear';
-pol_angle     = 0;        % [deg]
-gs_ptg_error  = 0.0;      % [deg]
-sat_ptg_error = 0.0;       % [deg]
+pol_angle     = 45;        % [deg]
+gs_ptg_error  = 0.01;      % [deg]
+sat_ptg_error = 0.10;       % [deg]
 targetBER     = 10e-4;
 rolloff       = 0.3;
 maxRs = 2e9
-nfdb = 7
+NF = 7
 LinkMargin = 3
 Data = [];
 BwData = [];
@@ -60,9 +60,12 @@ p_rx_dbm = linkBudget1(23,44, 65, 0.05, 225e9, 16, 0.0045, slantPathDistance, la
 % System Noise Temperature
 Ta = 300;                           % [K] Antenna noise temperature when pointing at the Earth (Worst case)
 T0 = 290;                           % [K] Reference noise temperature
-Te = (10^(nfdb/10)-1)*T0;% [K] Receiver equivalent noise temperature = (F-1)T0
-T_sys = (Ta + Te);                  % [K] System noise temperature
-
+Te = (10^(NF/10)-1)*T0;% [K] Receiver equivalent noise temperature = (F-1)T0
+%T_sys = (Ta + Te);                  % [K] System noise temperature
+[T1,P1,e1]     = atmProfile(HOSL,"Annual 15");
+[T2S,P2S,e2S]  = atmProfile(HOSL,"Summer 45");
+[gs_s,a,c] = InterpAtm({T1,P1,e1},{T2S,P2S,e2S},gs_lat);
+T_sys = (10^(NF/10)-1)*T0 + gs_s
 %% Data rate
 % BPSK
 M = 2;

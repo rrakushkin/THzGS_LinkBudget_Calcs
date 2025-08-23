@@ -21,9 +21,9 @@ D             = 1.5;       % [m]
 freq          = 225;       % [GHz]
 freq_Hz       = freq * 1e9;
 gs_pol_type   = 'linear';
-pol_angle     = 0;        % [deg]
-gs_ptg_error  = 0.0;      % [deg]
-sat_ptg_error = 0.0;       % [deg]
+pol_angle     = 45;        % [deg]
+gs_ptg_error  = 0.01;      % [deg]
+sat_ptg_error = 0.1;       % [deg]
 targetBER     = 10e-4;
 rolloff       = 0.3;
 
@@ -109,7 +109,7 @@ for k = 1:numel(directivity_gsAnt)
     end
 
      % Noise floor (dBm), SNR, Eb/N0, Link Margin
-     Tsys= Tsys_s;
+     Tsys= Tsys_s
      Pnf_dB    = 10*log10(K_boltz*Tsys*BW);        % dB
      snr_dB     = p_rx - 30 - Pnf_dB;                         % dB
      EbNo_dB    = snr_dB - 10*log10((1+rolloff)/b);       % dB
