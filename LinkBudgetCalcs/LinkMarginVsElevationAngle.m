@@ -38,7 +38,9 @@ slantPathDistance = sqrt((Re+LinkParams.OrbitalAltitude)^2 ...
 % Link Budget
 labs = absLossSlant(LinkParams.OrbitalAltitude * 1e-3, LinkParams.fc * 1e-9, elevAngle, 0.1, 0, "globalAnnual");
 labs = labs(1,:);
-p_rx_dbm = linkBudget(LinkParams.PtxDBm, LinkParams.Gsat, LinkParams.Ggs, LinkParams.fc, slantPathDistance, labs);
+%p_rx_dbm = linkBudget(LinkParams.PtxDBm, LinkParams.Gsat, LinkParams.Ggs, LinkParams.fc, slantPathDistance, labs);
+p_rx_dbm = linkBudget(23, 44, 65, 200e9, 16, 0.0045, slantPathDistance, labs, 1.5, 0.1, 0.01, 'linear', 15)
+
 for i = 1:length(LinkParams.Bw)
     bw = LinkParams.Bw(i);
     snr_db = receivedSNR(p_rx_dbm, LinkParams.nfdb, bw);
@@ -146,7 +148,7 @@ ylim([-40, 100])
 
 figure;
 
-plot(elevAngle, p_rx_dbm, 'b', 'LineWidth', 2);
+plot(elevAngle, linkMargin, 'b', 'LineWidth', 2);
 grid on;
 xlabel('Elevation Angle [deg]');
 ylabel('Received Power [dBm]');

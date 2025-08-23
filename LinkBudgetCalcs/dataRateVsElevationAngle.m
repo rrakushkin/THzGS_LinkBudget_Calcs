@@ -1,6 +1,5 @@
-clear, clc, close all;
-
-addpath('./functions')
+clear, clc;
+addpath(genpath('./functions'));
 
 % Constants
 k = physconst('boltzman');
@@ -13,7 +12,7 @@ LinkParams.PtxDBm = 25;
 LinkParams.Gsat = 44;
 LinkParams.Ggs = 65;
 LinkParams.nfdb = 7;
-LinkParams.targetBER = 1e-4;
+LinkParams.targetBER = 10e-4; %was 1e4 befrore but min success specifies 10e-4
 LinkParams.rolloff = 0.3;
 LinkParams.LinkMargin = 3;
 LinkParams.OrbitalAltitude = 400e3;
@@ -36,7 +35,8 @@ slantPathDistance = sqrt((Re+LinkParams.OrbitalAltitude)^2 ...
 % Link Budget
 labs = absLossSlant(LinkParams.OrbitalAltitude * 1e-3, LinkParams.fc * 1e-9, elevAngle, 0.1, 0, "globalAnnual");
 labs = labs(1,:);
-p_rx_dbm = linkBudget(LinkParams.PtxDBm, LinkParams.Gsat, LinkParams.Ggs, LinkParams.fc, slantPathDistance, 0)-labs;
+%p_rx_dbm = linkBudget(LinkParams.PtxDBm, LinkParams.Gsat, LinkParams.Ggs, LinkParams.fc, slantPathDistance, 0)-labs;
+p_rx_dbm =  linkBudget1(23,44, 65, 0.05, 225e9, 16, 0045, slantPathDistance, labs, 0.1, 0.01, 'linear', 0);
 % System Noise Temperature
 Ta = 300;                           % [K] Antenna noise temperature when pointing at the Earth (Worst case)
 T0 = 290;                           % [K] Reference noise temperature
@@ -53,9 +53,9 @@ b = log2(M);
 BER_function = @(EbNo_dB) berawgn(EbNo_dB, "psk", M, "nondiff") - LinkParams.targetBER;
 initial_guess = 10; % Initial guess in dB
 EbNo_dB = fzero(BER_function, initial_guess);
-% Find minimum SNR 
+% "Converting" EbNo to SNR based on BW, baudrate, and bit-rate
 SNR_min_db = EbNo_dB + 10*log10(b/(1+LinkParams.rolloff));
-% Find allowable bandwidth given noise figure
+% Find allowable bandwidth given noise figure (30 for converting dBm to dB)
 N = p_rx_dbm - 30 - SNR_min_db - LinkParams.LinkMargin;
 Bw = 10.^(N/10)/k/T_sys;
 Bw = min(Bw, LinkParams.maxRs*(1+LinkParams.rolloff));
@@ -67,8 +67,8 @@ handles = [handles h];
 
 for e = 0:10:90
     [~, i] = min(abs(e-elevAngle));
-    sprintf('Elev:{%d}\n', e)
-    sprintf('Rb = {%d}\n', dataRate(i).*1e-6)
+    %sprintf('Elev:{%d}\n', e)
+    %sprintf('Rb = {%d}\n', dataRate(i).*1e-6)
 end
 
 hold on;

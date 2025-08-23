@@ -21,7 +21,7 @@ function [L_abs] = absLossSlant(r, f, a, dh, r0, atm, Lat)
     nAngle     = numel(a);
 
     L_abs = zeros(nLength, nFrequency, nAngle); % [dB] Atmospheric absorption loss (Rec. ITU-R P.676).
-
+    T=zeros(nLength);P=zeros(nLength);e=zeros(nLength);
     for iLength = 1 : nLength
         h = r0 : dh : min(r(iLength), 100); % [km] Height.
         nHeight = numel(h);
@@ -31,15 +31,15 @@ function [L_abs] = absLossSlant(r, f, a, dh, r0, atm, Lat)
         d = sqrt(R ^ 2 * sind(a) .^ 2 + 2 * R * r(iLength) + r(iLength) ^ 2) - R * sind(a);
 
         if atm == "InterpSummer"    
-            [T1, P1, e1] = atmProfile(h, "Annual 15");
-            [T2S, P2S, e2S] = atmProfile(h, "Summer 45");
-            [T, P, e] = InterpAtm({T1, P1, e1}, {T2S, P2S, e2S}, Lat);
+            [T1,P1,e1] = atmProfile(h, "Annual 15");            
+            [T2S,P2S,e2S] = atmProfile(h, "Summer 45");
+            [T,P,e] = InterpAtm({T1,P1,e1}, {T2S,P2S,e2S}, Lat);
         elseif atm == "InterpWinter"
-            [T1, P1, e1] = atmProfile(h, "Annual 15");
-            [T2W, P2W, e2W] = atmProfile(h, "Winter 45");
-            [T, P, e] = InterpAtm({T1, P1, e1}, {T2W, P2W, e2W}, Lat);
+            [T1,P1,e1] = atmProfile(h, "Annual 15");
+            [T2W,P2W,e2W] = atmProfile(h, "Winter 45");
+            [T,P,e] = InterpAtm([T1,P1,e1], [T2W,P2W,e2W], Lat);
         else
-            [T, P, e] = atmProfile(h, atm);
+            [T,P,e] = atmProfile(h, atm);
         end
 
             %this linearly interpolates the low global atmosphere

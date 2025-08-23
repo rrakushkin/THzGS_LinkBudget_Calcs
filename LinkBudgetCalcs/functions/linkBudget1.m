@@ -1,4 +1,4 @@
-function p_rx_dbm = linkBudget(p_tx_dbm, g_sat, g_dish, f_c, nElem, sep_dist, distance, l_abs, d, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle)
+function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle)
     % LINKBUDGET (insert description)
     %
     % Input:
@@ -26,7 +26,6 @@ function p_rx_dbm = linkBudget(p_tx_dbm, g_sat, g_dish, f_c, nElem, sep_dist, di
 
     % Pointing loss
     satHPBW = (50.8 .* lambda) ./ (nElem*sep_dist); %taken from payload calculations
-    gsHPBW = (70 * (lambda ./ d)); %confirm! (added *2 part after FEKO sims)
     sat_ptg_loss = 12.*((sat_offAxisAngle./ satHPBW).^2); %ITU-R BO.790 (page 3)
     gs_ptg_loss = 12.*((gs_offAxisAngle ./ gsHPBW).^2); %ITU-R BO.790 (page 3) 
     l_ptg = gs_ptg_loss + sat_ptg_loss;
@@ -40,6 +39,6 @@ function p_rx_dbm = linkBudget(p_tx_dbm, g_sat, g_dish, f_c, nElem, sep_dist, di
             l_plf = 3;
     end
     %disp(l_spr)
-    p_rx_dbm = p_tx_dbm + g_sat + g_dish - l_spr - l_abs - l_ptg - l_plf;
+    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs - l_ptg - l_plf;
 end
 
