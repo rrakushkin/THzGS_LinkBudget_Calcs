@@ -11,9 +11,9 @@ c       = physconst('LightSpeed');
 
 % ---- Link budget params ----
 sat_tx        = 23;        % [dBm]
-geff_satAnt   = 44;        % [dBi]
+geff_satAnt   = 45;        % [dBi]
 %geff_gsAnt    = 65;        % [dBi]
-directivity_gsAnt = [60,62,64,65,66,68,70,72,74];   % [dBi]
+directivity_gsAnt = 60;   % [dBi]
 numElem       = 16;       % satellite array (num per length)
 distElem      = 0.0045;    % [m]
 D             = 1.5;       % [m]
@@ -24,18 +24,18 @@ gs_pol_type   = 'linear';
 pol_angle     = 45;        % [deg]
 gs_ptg_error  = 0.01;      % [deg]
 sat_ptg_error = 0.1;       % [deg]
-targetBER     = 1e-4;
+targetBER     = 1e-5;
 rolloff       = 0.3;
 
 % ---- Geometry ----
-HOSL = 37e-3;              % [km] (GS height above sea level)
-alt  = 460;                % [km] 
+HOSL = 0; %37e-3;              % [km] (GS height above sea level)
+alt  = 400;                % [km] 
 Elev = linspace(0,90,100); % [deg]
 
 % ---- Atmospheres ----
 hstep    = 0.1;            % [km]
 gs_lat   = 42.3378054237531;
-atmType = "InterpSummer"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer"];
+atmType = "globalAnnual"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer"];
 
 % ---- GS Noise Profiles ----
 [T1,P1,e1]     = atmProfile(HOSL,"Annual 15");
@@ -63,14 +63,15 @@ BER_function = @(x) berawgn(x,"psk",M,"nondiff") - targetBER;
 EbNo_min_dB  = fzero(BER_function,10);   % good initial guess
 
 % System noise temperatures for seasonal cases
-Tsys_s = (10^(NF/10)-1)*T0 + T_gs_s;
+Tsys_s = T_gs_s + T0
+%Tsys_s = (10^(NF/10)-1)*T0 + gs_s;
 %Tsys_w = (10^(NF/10)-1)*T0 + gs_w;
 
 % Slant range (km->m)
 Re          = 6371;
-GS_pos      = Re + HOSL;
-GS_pos_m      = GS_pos*1e3;
-alt_m = alt*1e3;
+GS_pos      = Re + HOSL
+GS_pos_m      = GS_pos*1e3
+alt_m = alt*1e3
 slant_dist_m  = sqrt(GS_pos_m.^2 .* sind(Elev).^2 + 2*GS_pos_m*alt_m + alt_m.^2) ...
               - GS_pos_m .* sind(Elev);                     % [m]
 
@@ -80,7 +81,7 @@ slant_dist_m  = sqrt(GS_pos_m.^2 .* sind(Elev).^2 + 2*GS_pos_m*alt_m + alt_m.^2)
 figure
 hold on
 xlabel('Elevation Angle [deg]');
-ylabel('SNR (dB)');
+ylabel('LinkMargin [dBm]');
 title(sprintf('Link Margin vs Elevation Angle at %.0f GHz', freq));
 xlim([10,90]); ylim([-40,100]); 
 grid on;
@@ -91,12 +92,12 @@ legend;
 
 % HPBW estimate from directivity
 Dlin     = 10.^(directivity_gsAnt/10);
-GS_HPBW  = 2.*sqrt(41253 ./ Dlin)   % degrees
+GS_HPBW  = sqrt(41253 ./ Dlin);   % degrees
 
 for k = 1:numel(directivity_gsAnt)
 
     % HPBW estimate from directivity
-    GS_HPBW = 2*(directivity_gsAnt/ 41253).^(0.5)
+    GS_HPBW = (directivity_gsAnt/ 41253).^(0.5)
 
     % Atmospheric absorption along slant path
     l_abs = absLossSlant(alt, freq, Elev, hstep, HOSL, atmType, gs_lat); % [dB]
@@ -105,50 +106,25 @@ for k = 1:numel(directivity_gsAnt)
     for j = 1:numel(Elev)
         p_rx_dBm(j) = linkBudget1(sat_tx, geff_satAnt, directivity_gsAnt(k), GS_HPBW(k), freq_Hz, ...
                              numElem, distElem, ...
-                             slant_dist_m(j), l_abs(1,1,j), ...
+                             slant_dist_m(j), 0, ...
                              sat_ptg_error, gs_ptg_error, gs_pol_type, ...
                              pol_angle); % result is in dBm
     end
-   
+    l_abs(1,1,j)
+    p_rx_dBm-l_abs(1,1,:);
      % Noise floor (dBm), SNR, Eb/N0, Link Margin
-     Tsys = Tsys_s;
-     Pnf_dBm    = 10*log10(K_boltz*Tsys*BW) + 30;        %dB
-     snr_dB     = p_rx_dBm  - Pnf_dBm;                    %dB
-
-     %CommentedD out for SNR to understand pure tone behavior
-     %EbNo_dB    = snr_dB + 10*log10((1+rolloff)/b)      %dB
-     %linkMargin = EbNo_dB - EbNo_min_dB;                %dB
+     Tsys = Tsys_s
+     Pnf_dB    = 10*log10(K_boltz*Tsys*BW);        % dB
+     snr_dB     = p_rx_dBm - 30 - Pnf_dB;                         % dB
+     EbNo_dB    = snr_dB + 10*log10((1+rolloff)/b);       % dB
+     linkMargin = EbNo_dB - EbNo_min_dB;                  % dB
 
     % ---------- Figure 1: plot link margin for each gain value ----------
     name1 = sprintf('%.2f dBi',directivity_gsAnt);
-
     colors = lines(numel(directivity_gsAnt));
-    plot(Elev, snr_dB, 'LineWidth', 1.5, ...
+    plot(Elev, linkMargin, 'LineWidth', 1.5, ...
          'DisplayName', sprintf('%.0f dBi', directivity_gsAnt(k)));
-     if directivity_gsAnt(k) == 74
-         hline = yline(3, 'Color', 'black', 'LineStyle','--', ...
-             'LineWidth', 3, 'DisplayName', '3 dB');
-     end
-%end 
-    % --- Assign colors: gray for all except 60 dBi case ---
-    %if directivity_gsAnt(k) == 60
-        %thisColor = [162, 20, 47] / 255;   % #A2142F (highlight)
-    %else
-        %grayShades = [0.8 0.8 0.8;0.7 0.7 0.7;0.6 0.6 0.6;0.55 0.55 0.55; 0.5 0.5 0.5;...
-         %0.45 0.45 0.45; 0.4 0.4 0.4; 0.35 0.35 0.35; 0.3 0.3 0.3; 0.2 0.2 0.2];
-        %thisColor = grayShades(mod(k-1, size(grayShades,1))+1, :); % cycle through grays
-    %end
-
-    % Plot
-    %plot(Elev, linkMargin, 'LineWidth', 1.5, ...
-         %'Color', thisColor, ...
-         %'DisplayName', sprintf('%.0f dBi', directivity_gsAnt(k)));
-    %if directivity_gsAnt(k) == 74
-    %hline = yline(3, 'Color', '#A2142F', 'LineStyle','--', ...
-                  %'LineWidth', 3, 'DisplayName', '3 dB');
-    %end
-end
-    
+end 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
