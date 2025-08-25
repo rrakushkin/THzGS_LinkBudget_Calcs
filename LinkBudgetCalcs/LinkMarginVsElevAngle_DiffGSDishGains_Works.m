@@ -80,7 +80,7 @@ slant_dist_m  = sqrt(GS_pos_m.^2 .* sind(Elev).^2 + 2*GS_pos_m*alt_m + alt_m.^2)
 figure
 hold on
 xlabel('Elevation Angle [deg]');
-ylabel('SNR (dB)');
+ylabel('Link Margin (dB)');
 title(sprintf('Link Margin vs Elevation Angle at %.0f GHz', freq));
 xlim([10,90]); ylim([-40,100]); 
 grid on;
@@ -91,13 +91,21 @@ legend;
 
 % HPBW estimate from directivity
 Dlin     = 10.^(directivity_gsAnt/10);
-GS_HPBW  = 2.*sqrt(41253 ./ Dlin)   % degrees
+GS_HPBW  = sqrt(41253 ./ Dlin)   % degrees
 
+% colors for plotting
+colors = [
+    0.1216 0.4667 0.7059;   % Blue
+    1.0000 0.4980 0.0549;   % Orange
+    0.1725 0.6275 0.1725;   % Green
+    0.8392 0.1529 0.1569;   % Red
+    0.5804 0.4039 0.7412;   % Purple
+    0.5490 0.3373 0.2941;   % Brown
+    0.8902 0.4667 0.7608;   % Pink
+    0.4980 0.4980 0.4980;   % Gray
+    0.7373 0.7412 0.1333;   % Olive
+];
 for k = 1:numel(directivity_gsAnt)
-
-    % HPBW estimate from directivity
-    GS_HPBW = 2*(directivity_gsAnt/ 41253).^(0.5)
-
     % Atmospheric absorption along slant path
     l_abs = absLossSlant(alt, freq, Elev, hstep, HOSL, atmType, gs_lat); % [dB]
     % Received power vs elevation (dBm)
@@ -115,15 +123,14 @@ for k = 1:numel(directivity_gsAnt)
      Pnf_dBm    = 10*log10(K_boltz*Tsys*BW) + 30;        %dB
      snr_dB     = p_rx_dBm  - Pnf_dBm;                    %dB
 
-     %CommentedD out for SNR to understand pure tone behavior
-     %EbNo_dB    = snr_dB + 10*log10((1+rolloff)/b)      %dB
-     %linkMargin = EbNo_dB - EbNo_min_dB;                %dB
+     %Commented out for SNR to understand pure tone behavior
+     EbNo_dB    = snr_dB + 10*log10((1+rolloff)/b) ;     %dB
+     linkMargin = EbNo_dB - EbNo_min_dB;                %dB
 
     % ---------- Figure 1: plot link margin for each gain value ----------
     name1 = sprintf('%.2f dBi',directivity_gsAnt);
 
-    colors = lines(numel(directivity_gsAnt));
-    plot(Elev, snr_dB, 'LineWidth', 1.5, ...
+    plot(Elev, linkMargin, 'LineWidth', 1.5,'Color', colors(k,:), ...
          'DisplayName', sprintf('%.0f dBi', directivity_gsAnt(k)));
      if directivity_gsAnt(k) == 74
          hline = yline(3, 'Color', 'black', 'LineStyle','--', ...

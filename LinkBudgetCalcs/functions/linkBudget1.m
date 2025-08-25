@@ -22,13 +22,13 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     
     % Spreading loss
     %disp(distance)
-    l_spr = 20*log10(distance * 1e-3) + 20*log10(f_c * 1e-9) + 92.45
+    l_spr = 20*log10(distance * 1e-3) + 20*log10(f_c * 1e-9) + 92.45;
 
     % Pointing loss
-    satHPBW = (50.8 .* lambda) ./ (nElem*sep_dist) %taken from payload calculations
-    sat_ptg_loss = 12.*((sat_offAxisAngle./ satHPBW).^2) %ITU-R BO.790 (page 3)
-    gs_ptg_loss = 12.*((gs_offAxisAngle ./ gsHPBW).^2) %ITU-R BO.790 (page 3) 
-    l_ptg = gs_ptg_loss + sat_ptg_loss
+    satHPBW = (50.8 .* lambda) ./ (nElem*sep_dist); %taken from payload calculations
+    sat_ptg_loss = 12.*((sat_offAxisAngle./ satHPBW).^2); %ITU-R BO.790 (page 3)
+    gs_ptg_loss = 12.*((gs_offAxisAngle ./ gsHPBW).^2); %ITU-R BO.790 (page 3) 
+    l_ptg = gs_ptg_loss + sat_ptg_loss;
     
 
     % Polarization loss facotr (PLF)
