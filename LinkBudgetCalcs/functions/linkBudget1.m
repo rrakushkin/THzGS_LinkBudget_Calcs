@@ -1,4 +1,4 @@
-function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle)
+function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m)
     % LINKBUDGET (insert description)
     %
     % Input:
@@ -19,7 +19,12 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
      c = physconst('LightSpeed');
      lambda = c ./ f_c;
     
+    % Connector Losses (Coax loss (IF) + Waveguide loss (Carrier))
     
+    w_l = 0.03 * wg_length_mm; %online sources indicate around 0.03 dB loss per mm 
+    cx_l = 0.27 * cx_length_m; %online sources indicate around 0.25 dB loss per m 
+    con_l = w_l + cx_l; %(dB)
+
     % Spreading loss
     %disp(distance)
     l_spr = 20*log10(distance * 1e-3) + 20*log10(f_c * 1e-9) + 92.45;
@@ -39,7 +44,7 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
             l_plf = -3;
     end
     %disp(l_spr)
-    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs + l_plf - l_ptg;
+    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs + l_plf - l_ptg - con_l;
     %fprintf('P_tx = %.2f dBm | G_sat = %.2f dBi | G_gs = %.2f dBi | L_spr = %.2f dB | L_abs = %.2f dB | P_rx = %.2f dBm\n', ...
         %p_tx_dbm, g_sat, directivity_g, l_spr, l_abs, p_rx_dbm);
 

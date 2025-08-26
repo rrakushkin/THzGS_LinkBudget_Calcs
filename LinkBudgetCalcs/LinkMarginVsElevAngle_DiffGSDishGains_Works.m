@@ -24,6 +24,9 @@ gs_pol_type   = 'linear';
 pol_angle     = 45;        % [deg]
 gs_ptg_error  = 0.01;      % [deg]
 sat_ptg_error = 0.1;       % [deg]
+wg_len_mm     = 3;         % [mm]
+cx_len_m      = 2;         % [m]
+
 targetBER     = 1e-4;
 rolloff       = 0.3;
 
@@ -115,7 +118,7 @@ for k = 1:numel(directivity_gsAnt)
                              numElem, distElem, ...
                              slant_dist_m(j), l_abs(1,1,j), ...
                              sat_ptg_error, gs_ptg_error, gs_pol_type, ...
-                             pol_angle); % result is in dBm
+                             pol_angle, wg_len_mm, cx_len_m); % result is in dBm
     end
    
      % Noise floor (dBm), SNR, Eb/N0, Link Margin

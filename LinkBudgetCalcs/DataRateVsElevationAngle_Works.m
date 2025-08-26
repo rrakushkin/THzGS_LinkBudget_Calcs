@@ -18,11 +18,14 @@ gs_pol_type   = 'linear';
 pol_angle     = 45;              % [deg] polarization mismatch
 gs_ptg_error  = 0.01;            % [deg]
 sat_ptg_error = 0.10;            % [deg]
+wg_len_mm     = 3;               % [mm]
+cx_len_m      = 2;               % [m]
 targetBER     = 1e-4;
 rolloff       = 0.3;
 maxRs         = 2e9;             % [Hz] symbol-rate ceiling
 NF_dB         = 8;               % [dB] receiver noise figure
 LinkMargin    = 3;               % [dB]
+
 
 %% -------------------- Geometry ----------------------
 HOSL_km = 37e-3;                 % [km] GS height above sea level
@@ -37,14 +40,14 @@ alt_m     = alt_km*1e3;
 
 % Slant range [m]
 slant_m = sqrt(GS_pos_m.^2 .* sind(elevDeg).^2 + 2*GS_pos_m*alt_m + alt_m.^2) ...
-        - GS_pos_m .* sind(elevDeg);     % (Ne×1)
+        - GS_pos_m .* sind(elevDeg);     
 
 Ne = numel(elevDeg);
 Ng = numel(directivity_gsAnt);
 
 %% -------------------- Atmosphere --------------------
 gs_lat  = 42.3378054237531;
-atmType = "globalAnnual";
+atmType = "InterpSummer";
 
 % alt in km, f in GHz (per your function header)
 labs3d = absLossSlant(alt_km, freq_GHz, elevDeg.', 0.1, 0, atmType, gs_lat);
@@ -65,7 +68,7 @@ for k = 1:Ne
             sat_tx, geff_satAnt, directivity_gsAnt(i), GS_HPBW_deg(i), ...
             freq_Hz, numElem, distElem, ...
             d_k, LabsK, ...
-            sat_ptg_error, gs_ptg_error, gs_pol_type, pol_angle );
+            sat_ptg_error, gs_ptg_error, gs_pol_type, pol_angle, wg_len_mm, cx_len_m);
     end
 end
 p_rx_dbm
@@ -76,8 +79,8 @@ p_rx_dbm
 [T2S,P2S,e2S] = atmProfile(HOSL_km,"Summer 45");
 [gs_T,~,~]    = InterpAtm({T1,P1,e1},{T2S,P2S,e2S}, gs_lat);
 
-T_gs_s = max(max(gs_T), 300);          % scalar worst-case ambient (K)
-Tsys   = (10^(NF_dB/10)-1)*T0 + T_gs_s;  % scalar system noise temp (K)
+T_gs_s = max(max(gs_T), 300);          % worst-case ambient (K)
+Tsys   = (10^(NF_dB/10)-1)*T0 + T_gs_s;  % system noise temp (K)
 
 %% -------------------- Required Eb/N0 (BPSK) ----------
 M = 2;  b = log2(M);
@@ -130,11 +133,34 @@ end
 grid on;
 xlabel('Elevation Angle [deg]');
 ylabel('Achievable Bit Rate R_b [Gbps]');
-xlim([0 90]); xticks(0:10:90);
 % denser y-ticks (auto based on range)
 yr = ylim; yticks(linspace(yr(1), yr(2), 11));
 legend('show','Location','northwest');
 title(sprintf('Rb vs Elevation @ %.0f GHz', freq_GHz));
+
+% -------------------- Mark 0.1 Gbps points ----------------
+targetRate = 0.1e9; % 0.1 Gbps in bps
+
+fprintf('\n--- 0.1 Gbps Crossing Points ---\n');
+for i = 1:Ng
+    % find closest point to 0.1 Gbps
+    [~, idx] = min(abs(dataRate(:,i) - targetRate));
+    if abs(dataRate(idx,i) - targetRate) < 0.02e9   % tolerance = 20 Mbps
+        xpt = elevDeg(idx);
+        ypt = dataRate(idx,i)*1e-9; % in Gbps
+
+        % Print to console
+        fprintf('%.0f dBi → 0.1 Gbps at %.1f° elevation\n', ...
+                 directivity_gsAnt(i), xpt);
+
+        % Mark with a circle (but do NOT add legend entry)
+        plot(xpt, ypt, 'o', 'MarkerEdgeColor','k', ...
+             'MarkerFaceColor', colors(i,:), 'HandleVisibility','off');
+    end
+end
+fprintf('--------------------------------\n');
+
+
 %% -------------------- Plot: Bandwidth ----------------
 figure; hold on;
 
