@@ -1,4 +1,4 @@
-function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m)
+function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m, sw_l)
     % LINKBUDGET (insert description)
     %
     % Input:
@@ -21,9 +21,9 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     
     % Connector Losses (Coax loss (IF) + Waveguide loss (Carrier))
     
-    w_l = 0.03 * wg_length_mm; %online sources indicate around 0.03 dB loss per mm 
-    cx_l = 0.27 * cx_length_m; %online sources indicate around 0.25 dB loss per m 
-    con_l = w_l + cx_l; %(dB)
+    w_l = 0.04 * wg_length_mm; %online sources indicate around 0.03 dB loss per mm 
+    cx_l = 0.3 * cx_length_m; %online sources indicate around 0.25 dB loss per m 
+    con_l = w_l + cx_l + sw_l; %(dB)
 
     % Spreading loss
     %disp(distance)
