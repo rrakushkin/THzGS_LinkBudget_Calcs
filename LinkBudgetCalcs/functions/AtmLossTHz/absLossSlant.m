@@ -37,7 +37,7 @@ function [L_abs] = absLossSlant(r, f, a, dh, r0, atm, Lat)
         elseif atm == "InterpWinter"
             [T1,P1,e1] = atmProfile(h, "Annual 15");
             [T2W,P2W,e2W] = atmProfile(h, "Winter 45");
-            [T,P,e] = InterpAtm([T1,P1,e1], [T2W,P2W,e2W], Lat);
+            [T,P,e] = InterpAtm({T1,P1,e1}, {T2W,P2W,e2W}, Lat);
         else
             [T,P,e] = atmProfile(h, atm);
         end

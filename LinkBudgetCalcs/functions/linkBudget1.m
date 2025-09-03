@@ -1,4 +1,4 @@
-function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m, sw_l)
+function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m, sw_l, rdm_l)
     % LINKBUDGET (insert description)
     %
     % Input:
@@ -12,6 +12,7 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     %   pAngle = polarization angle between the tx and rx (degrees)
     %   l_abs (atmospheric absorption loss)     [dB]           
     %   surf_rms    [um] 
+    % rdm_l = radome loss
     %   Output:
     %   p_rx_dbm   [dBm]
     
@@ -44,7 +45,7 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
             l_plf = -3;
     end
     %disp(l_spr)
-    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs + l_plf - l_ptg - con_l;
+    p_rx_dbm = p_tx_dbm + g_sat + directivity_g - l_spr - l_abs + l_plf - l_ptg - con_l - rdm_l;
     %fprintf('P_tx = %.2f dBm | G_sat = %.2f dBi | G_gs = %.2f dBi | L_spr = %.2f dB | L_abs = %.2f dB | P_rx = %.2f dBm\n', ...
         %p_tx_dbm, g_sat, directivity_g, l_spr, l_abs, p_rx_dbm);
 

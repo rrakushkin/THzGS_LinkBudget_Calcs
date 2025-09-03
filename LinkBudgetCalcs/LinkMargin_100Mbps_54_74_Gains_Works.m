@@ -7,32 +7,33 @@ T0 = 290;                      % [K]
 c  = physconst('LightSpeed');  % [m/s]
 
 % Link budget params -----------------------------------
-sat_tx        = 25;              % [dBm]
+sat_tx        = 23;              % [dBm]
 geff_satAnt   = 44;              % [dBi]  (TX antenna gain)
-directivity_gsAnt = [54, 56, 59, 60, 62, 63, 64, 65, 66, 68, 70, 72, 74];  % [dBi] sweep
+directivity_gsAnt = [54, 60, 64, 68, 72]%[54, 56, 59, 60, 62, 63, 64, 65, 66, 68, 70, 72, 74];  % [dBi] sweep
 numElem       = 16;              % sat array (used inside linkBudget1)
 distElem      = 0.0045;          % [m]
 freq_GHz      = 225;             % [GHz] (for absLossSlant)
 freq_Hz       = freq_GHz*1e9;    % [Hz]   (for linkBudget1)
 gs_pol_type   = 'linear';
 pol_angle     = 45;              % [deg] polarization mismatch
-gs_ptg_error  = 0.01;            % [deg]
-sat_ptg_error = 0.10;            % [deg]
-wg_len_mm     = 13;              % [mm]
-cx_len_m      = 2;               % [m]
+gs_ptg_error  = 0.026;            % [deg]
+sat_ptg_error = 0.26;            % [deg]
+wg_len_mm     = 25;              % [mm]
+cx_len_m      = 4;               % [m]
 NF_dB         = 8;               % [dB] receiver noise figure
-sw_ls      = 1.25                % [dB]
+sw_ls         = 1.25;            % [dB]
+rdm_ls        = 1;               % [dB]
 % Assume BPSK thus bps = baude rate as well
 M = 2; % BPSK
 b = log2(M);
-target_bps = 100e6;
+target_bps = 100e6
 rolloff = 0.3;
-BW = target_bps*(1+rolloff)/b;
+BW = target_bps*(1+rolloff)/b
 targetBER = 1e-4;
 
 % GS Location and Geometry -----------------------------------
 gs_lat  = 42.3378054237531;
-atmType = "InterpSummer";
+atmType = "InterpWinter";
 
 HOSL_km = 37e-3;                 % [km] GS height above sea level
 alt_km  = 400;                   % [km]
@@ -53,7 +54,7 @@ Ng = numel(directivity_gsAnt);
 
 % Environment Losses and Noise -----------------------------------
 [T1,P1,e1]    = atmProfile(HOSL_km,"Annual 15");
-[T2S,P2S,e2S] = atmProfile(HOSL_km,"Summer 45");
+[T2S,P2S,e2S] = atmProfile(HOSL_km,"Winter 45");
 [gs_T,~,~]    = InterpAtm({T1,P1,e1},{T2S,P2S,e2S}, gs_lat);
 gs_T
 T_gs_s = max(max(gs_T), 300);                    % scalar worst-case [K]
@@ -80,7 +81,7 @@ for k = 1:Ne
             freq_Hz, numElem, distElem, ...
             d_k, LabsK, ...
             sat_ptg_error, gs_ptg_error, gs_pol_type, pol_angle, ...
-            wg_len_mm, cx_len_m, sw_ls);                      % [dBm]
+            wg_len_mm, cx_len_m, sw_ls, rdm_ls);                      % [dBm]
     end
 end
 
@@ -146,4 +147,5 @@ xlabel('Elevation Angle [deg]');
 ylabel('Link Margin (dB)');
 
 legend('show','Location','northwest');
-title(sprintf('Link Margin @ R_b=100 Mbps (BPSK, \\alpha=%.1f), %.0f GHz', rolloff, freq_GHz));
+target_gbps = target_bps*(10^-9)
+title(sprintf('Link Margin @ R_b= %.1f Gbps (BPSK, \\alpha=%.1f), %.0f GHz', target_gbps, rolloff, freq_GHz));
