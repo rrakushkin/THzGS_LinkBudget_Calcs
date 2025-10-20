@@ -1,4 +1,4 @@
-function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m, sw_l, rdm_l)
+function p_rx_dbm = linkBudget_FullVersion(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nElem, sep_dist, distance, l_abs, sat_offAxisAngle, gs_offAxisAngle, gs_polarization, pAngle, wg_length_mm, cx_length_m, sw_l, rdm_l)
     % LINKBUDGET (insert description)
     %
     % Input:
@@ -23,7 +23,7 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     % Connector Losses (Coax loss (IF) + Waveguide loss (Carrier))
     
     w_l = 0.04 * wg_length_mm; %online sources indicate around 0.03 dB loss per mm 
-    cx_l = 0.3 * cx_length_m; %online sources indicate around 0.25 dB loss per m 
+    cx_l = 0.11 * cx_length_m; %online sources indicate around 0.25 dB loss per m for 2 GHz (LMR-400) 
     con_l = w_l + cx_l + sw_l; %(dB)
 
     % Spreading loss
@@ -34,7 +34,7 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
     satHPBW = (50.8 .* lambda) ./ (nElem*sep_dist); %taken from payload calculations
     sat_ptg_loss = 12.*((sat_offAxisAngle./ satHPBW).^2); %ITU-R BO.790 (page 3)
     gs_ptg_loss = 12.*((gs_offAxisAngle ./ gsHPBW).^2); %ITU-R BO.790 (page 3) 
-    l_ptg = gs_ptg_loss + sat_ptg_loss;
+    l_ptg = gs_ptg_loss + sat_ptg_loss
     
 
     % Polarization loss facotr (PLF)
@@ -51,4 +51,4 @@ function p_rx_dbm = linkBudget1(p_tx_dbm, g_sat, directivity_g, gsHPBW, f_c, nEl
 
 
 end
-
+%%%%%%%%%%%%%

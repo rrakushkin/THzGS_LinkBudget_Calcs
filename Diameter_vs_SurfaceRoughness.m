@@ -3,7 +3,7 @@ clear; clc; close all;
 
 % --- Inputs ---
 f_GHz     = 225;      % [GHz]
-G_eff_dBi = 68;       % [dBi]
+G_eff_dBi = 69.9;       % [dBi]
 eta0      = 0.70;
 D_min     = 0.5;      % [m]
 D_max     = 3.0;      % [m]
@@ -56,3 +56,14 @@ formulaStr = ['$\eta_s = e^{-(4\pi\sigma/\lambda)^2}$', newline, ...
 text(xpos, ypos, formulaStr, ...
      'Interpreter','latex', 'FontSize',12, ...
      'BackgroundColor',[1 1 1], 'EdgeColor',[0.6 0.6 0.6]);
+xtick_step = 0.1; % meters; adjust for finer spacing (e.g., 0.05 or 0.1)
+xticks(D_min:xtick_step:D_max);
+
+% Make sure grid matches ticks
+grid on;
+ax = gca;
+ax.XMinorTick = 'on';
+ax.YMinorTick = 'on';
+ax.MinorGridLineStyle = ':';
+ax.GridAlpha = 0.4;
+ax.MinorGridAlpha = 0.3;

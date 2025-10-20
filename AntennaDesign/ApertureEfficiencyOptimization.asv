@@ -1,0 +1,101 @@
+% aperture_efficiency_vs_n.m
+% ε_ap = cot^2(θ0/2) * | ∫_0^{θ0} sqrt(Gf(θ')) * tan(θ'/2) dθ' |^2
+% With Gf(θ') = (n+1) * (cos θ')^n  (Antenna Theory, Reflectors chapter)
+% theta0 is the subtended angle (subtended angle measures from the parvertix
+% to edge of dish)
+clear; clc;
+
+%% General Antenna Parameters (F/D and or theta0)           
+[theta0_deg, f_over_d, f_m, d_m] = ReflectorGeometry('theta0_deg', 46.1); %θ₀ is given so f/d is derived from it
+%% Fixed Parameters            
+theta0 = deg2rad(theta0_deg);     % convert to radians
+prefactor = cot(theta0/2)^2;      % cot^2(theta0/2)
+
+%% Define Integrand and Aperture Efficiency
+% sqrt(Gf) = sqrt(n+1) * (cos θ')^(n/2)
+integrand = @(tp, n) sqrt(n+1) .* (cos(tp)).^(n/2) .* tan(tp/2);
+
+I_of_n = @(n) arrayfun(@(nn) ...
+    integral(@(tp) integrand(tp, nn), 0, theta0, ...
+             'RelTol', 1e-10, 'AbsTol', 1e-12), n);
+
+eps_ap = @(n) prefactor .* abs(I_of_n(n)).^2;
+
+%% Sweep n and Evaluate
+n_min = 0; n_max = 60; Npts = 601;
+n_vec = linspace(n_min, n_max, Npts);
+eps_vec = eps_ap(n_vec);
+
+%% Find Maximum Efficiency and Corresponding n
+[eps_max, idx_max] = max(eps_vec);
+n_opt = n_vec(idx_max);
+
+%% Half-power angle and HPBW at n_opt
+% Half-power condition: (cos θ_HP)^n = 1/2  -> θ_HP = acos(2^(-1/n))
+theta_HP_rad = acos(2.^(-1 ./ n_opt));
+HPBW_rad     = 2 * theta_HP_rad;
+theta_HP_deg = rad2deg(theta_HP_rad);
+HPBW_deg_opt = rad2deg(HPBW_rad);
+
+%% Display Results
+fprintf('-------------------------------------------\n');
+fprintf('Aperture Efficiency Analysis\n');
+fprintf('-------------------------------------------\n');
+fprintf('θ₀ = %.4f degrees\n', theta0_deg);
+fprintf('Maximum ε_ap = %.6f\n', eps_max);
+fprintf('Optimal n = %.4f\n', n_opt);
+fprintf('θ_HP (at n_opt) = %.4f°\n', theta_HP_deg);
+fprintf('HPBW  (at n_opt) = %.4f°\n', HPBW_deg_opt);
+%% Plot ε_ap vs n
+figure;
+plot(n_vec, eps_vec, 'LineWidth', 1.8); hold on;
+plot(n_opt, eps_max, 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
+grid on;
+xlabel('n'); ylabel('\epsilon_{ap}');
+title(sprintf('\\epsilon_{ap} vs n  (\\theta_0 = %.4f^\\circ)', theta0_deg));
+text(n_opt + 1, eps_max, sprintf('n = %.2f', n_opt), 'Color', 'r');
+xlim([n_min n_max]);
+
+%% Plot G_f(θ) at n = n_opt over [0, θ0]
+theta = linspace(0, theta0, 800);           % radians
+Gf_opt = (n_opt + 1) .* (cos(theta)).^n_opt;
+
+figure;
+plot(rad2deg(theta), Gf_opt, 'LineWidth', 1.8); hold on;
+grid on;
+xlabel('\theta (degrees)', 'Interpreter', 'tex');
+ylabel('G_f(\theta) = (n+1)(cos\theta)^n', 'Interpreter', 'tex');
+title(sprintf('Feed Pattern at n = %.3f  over [0, \\theta_0=%.4f^\\circ]', ...
+      n_opt, theta0_deg), 'Interpreter', 'tex');
+xlim([0 theta0_deg]);
+
+% Mark half-power level and θ_HP on the feed plot (if within plotted span)
+Gmax = (n_opt + 1);                 % at θ = 0
+yline(Gmax/2, '--k', 'Half-Power Level');
+if theta_HP_deg <= theta0_deg
+    xline(theta_HP_deg, '--r', sprintf('\\theta_{HP} = %.2f^\\circ', theta_HP_deg), ...
+          'LabelOrientation', 'horizontal', 'Interpreter', 'tex');
+end
+
+%% Compute and Plot HPBW vs n (global curve) and mark n_opt
+n_vals = linspace(0.5, 60, 200);
+HPBW_rad_all = 2 * acos(2.^(-1 ./ n_vals));
+HPBW_deg_all = rad2deg(HPBW_rad_all);
+
+figure;
+plot(n_vals, HPBW_deg_all, 'LineWidth', 1.8); hold on;
+plot(n_opt, HPBW_deg_opt, 'ro', 'MarkerSize', 8, 'LineWidth', 1.5);
+grid on;
+xlabel('n');
+ylabel('HPBW (degrees)');
+title('HPBW of Feed Pattern (cos^n model)');
+text(n_opt + 1, HPBW_deg_opt, sprintf('n_{opt}=%.2f, HPBW=%.2f^\\circ', ...
+     n_opt, HPBW_deg_opt), 'Color', 'r', 'Interpreter', 'tex');
+%% Find Horn Dimensions for Determined HPBW
+[ApE,ApH,Le,Lh] = FindHornDimensions(theta_HP_deg,theta_HP_deg);
+fprintf('\n---------------------------------------------\n');
+fprintf('Aperture (E-plane): %.4f mm\n', ApE*1e3);
+fprintf('Aperture (H-plane): %.4f mm\n', ApH*1e3);
+fprintf('Horn Length (E-plane): %.4f mm\n', Le*1e3);
+fprintf('Horn Length (H-plane): %.4f mm\n', Lh*1e3);
+fprintf('---------------------------------------------\n');

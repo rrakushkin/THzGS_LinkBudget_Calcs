@@ -1,4 +1,4 @@
-clear, close all;
+clear, clc, close all;
 %addpath(genpath('./functions'));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,20 +13,21 @@ c       = physconst('LightSpeed');
 sat_tx        = 23;        % [dBm]
 geff_satAnt   = 44;        % [dBi]
 %geff_gsAnt    = 65;        % [dBi]
-directivity_gsAnt = [60,62,64,65,66,68,70,72,74];   % [dBi]
+directivity_gsAnt = [68,69,70,71,72];   % [dBi]
 numElem       = 16;       % satellite array (num per length)
 distElem      = 0.0045;    % [m]
 D             = 1.5;       % [m]
-%surface_rms   = 100;       % [um]
+surface_rms   = 70;       % [um]
 freq          = 225;       % [GHz]
 freq_Hz       = freq * 1e9;
 gs_pol_type   = 'linear';
-pol_angle     = 45;        % [deg]
-gs_ptg_error  = 0.01;      % [deg]
-sat_ptg_error = 0.1;       % [deg]
-wg_len_mm     = 3;         % [mm]
-cx_len_m      = 2;         % [m]
-
+pol_angle     = 5;        % [deg]
+gs_ptg_error  = 0.04;      % [deg]
+sat_ptg_error = 0.2;       % [deg]
+wg_len_mm     = 25.4;         % [mm]
+cx_len_m      = 4;         % [m]
+sw_l = 1.25;
+rdm_l = 1;
 targetBER     = 1e-4;
 rolloff       = 0.3;
 
@@ -43,11 +44,11 @@ atmType = "InterpSummer"; %["Summer 45","Winter 45","Annual 15","InterpWinter","
 % ---- GS Noise Profiles ----
 [T1,P1,e1]     = atmProfile(HOSL,"Annual 15");
 [T2S,P2S,e2S]  = atmProfile(HOSL,"Summer 45");
-[gs_s,a,c]     = InterpAtm({T1,P1,e1},{T2S,P2S,e2S},gs_lat);
+[gs_s,~,~]     = InterpAtm({T1,P1,e1},{T2S,P2S,e2S},gs_lat);
 T_gs_s = max(gs_s, 300)
 %[T2W,P2W,e2W]  = atmProfile(HOSL,"Winter 45");
 %[gs_Tw]     = InterpAtm({T1,P1,e1},{T2W,P2W,e2W},gs_lat);
-BW       = 2e9;   %[Hz] 
+BW       = 130e6;             %[Hz] 130 MHz = 100 Mbps
 NF       = 8;       % [dB]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PRECOMPUTATIONS
@@ -58,7 +59,10 @@ lambda   = c ./ freq_Hz;
 %g_gsAnt  = (pi.*D./lambda).^2;
 
 % Surface efficiency (not applied because geff_gsAnt provided)
-%surface_efficiency = exp(-(4*pi*(surface_rms*1e-6)./lambda).^2);
+surface_efficiency = exp(-(4*pi*(surface_rms*1e-6)./lambda).^2)
+surface_roughness_loss_dB1 = 10*log10(exp(-(4*pi*(surface_rms*1e-6)./(c/freq_Hz)).^2))
+surface_roughness_loss_dB2 = 10*log10(exp(-(4*pi*(surface_rms*1e-6)./lambda).^2))
+
 
 % BPSK required Eb/N0 for target BER
 M = 2; b = log2(M);
@@ -114,11 +118,11 @@ for k = 1:numel(directivity_gsAnt)
     % Received power vs elevation (dBm)
     p_rx_dBm = zeros(size(Elev));
     for j = 1:numel(Elev)
-        p_rx_dBm(j) = linkBudget1(sat_tx, geff_satAnt, directivity_gsAnt(k), GS_HPBW(k), freq_Hz, ...
+        p_rx_dBm(j) = linkBudget_FullVersion(sat_tx, geff_satAnt, directivity_gsAnt(k), GS_HPBW(k), freq_Hz, ...
                              numElem, distElem, ...
                              slant_dist_m(j), l_abs(1,1,j), ...
                              sat_ptg_error, gs_ptg_error, gs_pol_type, ...
-                             pol_angle, wg_len_mm, cx_len_m); % result is in dBm
+                             pol_angle, wg_len_mm, cx_len_m, sw_l, rdm_l); % result is in dBm
     end
    
      % Noise floor (dBm), SNR, Eb/N0, Link Margin
@@ -135,7 +139,7 @@ for k = 1:numel(directivity_gsAnt)
 
     plot(Elev, linkMargin, 'LineWidth', 1.5,'Color', colors(k,:), ...
          'DisplayName', sprintf('%.0f dBi', directivity_gsAnt(k)));
-     if directivity_gsAnt(k) == 74
+     if directivity_gsAnt(k) == 72
          hline = yline(3, 'Color', 'black', 'LineStyle','--', ...
              'LineWidth', 3, 'DisplayName', '3 dB');
      end
