@@ -1,0 +1,96 @@
+function [theta0_deg, f_over_d, f_m, d_m] = BasicAntennaGeometry(varargin)
+% BasicAntennaGeometry  Compute parabolic reflector geometry from θ0, f/D, and/or f (+ optional D).
+% Usage:
+%   BasicAntennaGeometry('theta0_deg', 46.1)
+%   BasicAntennaGeometry('f_over_d', 0.42)
+%   BasicAntennaGeometry('f_m', 0.68)                  % uses default D
+%   BasicAntennaGeometry('f_m', 0.68, 'd_m', 1.7)      % f and D both given
+%   BasicAntennaGeometry('theta0_deg', 46.1, 'd_m', 1.7)   % D used only to report f
+%
+% Balanis Eq. 15-25:
+%   f = (D/4) * cot(theta0/2)  ->  f/D = (1/4)*cot(theta0/2)
+%   theta0 = 2*atan( 1 / (4*(f/D)) )  [degrees via cotd/atand]
+
+% ---- collect name-value inputs (simple parser) ----
+theta0_in = [];
+fd_in     = [];
+f_in      = [];
+d_in      = [];
+
+if mod(nargin,2) ~= 0
+    error('Use name-value pairs, e.g., ''theta0_deg'', 46.1');
+end
+
+for k = 1:2:nargin
+    paramName = string(varargin{k}); 
+    paramValue  = varargin{k+1};
+    switch paramName
+        case "theta0_deg", theta0_in = paramValue;
+        case "f_over_d",   fd_in     = paramValue;
+        case "f_m",        f_in      = paramValue;
+        case "d_m",        d_in      = paramValue;
+        otherwise, error('Unknown parameter name "%s".', varargin{k});
+    end
+end
+
+% ---- presence flags ----
+have_theta = ~isempty(theta0_in);
+have_fd    = ~isempty(fd_in);
+have_f     = ~isempty(f_in);
+have_D     = ~isempty(d_in);
+
+% ---- limit over-definition (at most can enter 2 parameters, and those two cannot be f/d and theta (can only enter one of these)----
+num_def = have_theta + have_fd + have_f + have_D;
+if num_def < 2
+    error('Not enough parameters entered. Must enter 2 parameters');
+elseif num_def > 2
+    error('Overdefined. Provide at most two parameters.');
+elseif (have_theta+have_fd) == 2
+    error('Overdefined, can enter theta or f/d ratio but not both.')
+end 
+% ---- f/d <-> theta conversion funtions----
+theta_from_fd = @(fd) 2*atand(1./(4*fd));
+fd_from_theta = @(th) 0.25 * cotd(th/2);
+
+% ---- compute ----
+theta0_deg = NaN; f_over_d = NaN; f_m = NaN; d_m = NaN;
+
+if have_theta
+    %find f/d 
+    %then depending on if have_f or have_d, find d or f respectively using
+    %f/d ratio
+end 
+if have_fd
+    %find theta
+    %then depending on if have_f or have_d, find d or f respectively using
+    %f/d ratio
+end 
+if have_f && have_d
+    %find f/d 
+    %find theta
+end
+
+% ---- quick sanity ----
+if ~isnan(f_over_d) && f_over_d <= 0, error('f/D must be positive.'); end
+if ~isnan(theta0_deg) && ~(theta0_deg > 0 && theta0_deg < 180)
+    error('theta0_deg must lie in (0, 180).');
+end
+
+% ---- report ----
+fprintf('---------------------------------------------\n');
+fprintf('Reflector Geometry (Balanis Eq. 15-25)\n');
+fprintf('---------------------------------------------\n');
+if have_theta, fprintf('Input: θ0     = %.6f°\n', theta0_in); end
+if have_fd,    fprintf('Input: f/D    = %.8f\n', fd_in);      end
+if have_f,     fprintf('Input: f      = %.6f m\n', f_in);      end
+if have_D,     fprintf('Input: D      = %.6f m\n', d_in);      end
+if have_f && ~have_D
+    fprintf('Note: Using default D = %.6f m\n', DEFAULT_D);
+end
+fprintf('---------------------------------------------\n');
+fprintf('Computed θ0   = %.6f°\n', theta0_deg);
+fprintf('Computed f/D  = %.8f\n', f_over_d);
+if ~isnan(f_m), fprintf('Computed f    = %.6f m\n', f_m); end
+if ~isnan(d_m), fprintf('Computed D    = %.6f m\n', d_m); end
+fprintf('---------------------------------------------\n');
+end

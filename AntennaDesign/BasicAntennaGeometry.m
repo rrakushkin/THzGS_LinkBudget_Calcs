@@ -1,92 +1,107 @@
 function [theta0_deg, f_over_d, f_m, d_m] = BasicAntennaGeometry(varargin)
-% ReflectorGeometry  Compute parabolic reflector geometry from θ₀, f/d, or f.
+% BasicAntennaGeometry  Compute parabolic reflector geometry from θ₀, f/D, f, and/or D.
 %
-%   Usage examples:
-%       ReflectorGeometry('theta0_deg', 46.1); <<< here θ₀ is given so f/d is derived from it
-%       ReflectorGeometry('f_over_D', 0.42); <<< here f/d is given so θ₀ is derived from it
-%       ReflectorGeometry('f_m', 0.68);   % <<< here the focal length f_m
-%       is given only so default D = 1.0 m is used to determine f/d and
-%       corresponding θ₀ 
+% Usage:
+%   BasicAntennaGeometry('theta0_deg', 46.1, 'f_m', 0.68)
+%   BasicAntennaGeometry('theta0_deg', 46.1, 'd_m', 1.7)
+%   BasicAntennaGeometry('f_over_d', 0.42, 'f_m', 0.68)
+%   BasicAntennaGeometry('f_over_d', 0.42, 'd_m', 1.7)
+%   BasicAntennaGeometry('f_m', 0.68, 'd_m', 1.7)
 %
-%   Formula (Balanis Eq. 15-25):
-%       f = (D/4) * cot(theta0/2)
-%       → f/D = (1/4)*cot(theta0/2)
-%       → θ₀ = 2*atan(1 / (4*(f/D)))
-%---------------------------------------------------
+% Balanis Eq. 15-25:
+%   f = (D/4)*cot(θ₀/2)  →  f/D = (1/4)*cot(θ₀/2)
+%   θ₀ = 2*atan(1 / (4*(f/D)))   [degrees via cotd/atand]
 
-% --- Parse Inputs ---
-p = inputParser;
-addParameter(p, 'theta0_deg', []);
-addParameter(p, 'f_over_d', []);
-addParameter(p, 'f_m', []);
-parse(p, varargin{:});
+% ------------------------------
+% Parse name–value pairs
+% ------------------------------
+theta0_in = [];
+fd_in     = [];
+f_in      = [];
+d_in      = [];
 
-theta0_deg_in = p.Results.theta0_deg;
-f_over_d_in   = p.Results.f_over_d;
-f_m_in        = p.Results.f_m;
-
-% --- Flags ---
-have_theta = ~isempty(theta0_deg_in);
-have_fD    = ~isempty(f_over_d_in);
-have_f     = ~isempty(f_m_in);
-
-% --- Case validation ---
-if sum([have_theta, have_fD, have_f]) == 0
-    error('Provide one of "theta0_deg", "f_over_D", or "f_m".');
-elseif sum([have_theta, have_fD, have_f]) > 1
-    warning('Multiple inputs provided — using first valid priority: theta0 > f/D > f.');
+for k = 1:2:numel(varargin)
+    name = lower(string(varargin{k}));
+    val  = varargin{k+1};
+    switch name
+        case "theta0_deg", theta0_in = val;
+        case "f_over_d",   fd_in     = val;
+        case "f_m",        f_in      = val;
+        case "d_m",        d_in      = val;
+        otherwise, error('Unknown parameter name "%s".', varargin{k});
+    end
 end
 
-% -------------------------------------------------------------------------
-% CASE 1: θ₀ given
-% -------------------------------------------------------------------------
+% ------------------------------
+% Presence flags
+% ------------------------------
+have_theta = ~isempty(theta0_in);
+have_fd    = ~isempty(fd_in);
+have_f     = ~isempty(f_in);
+have_d     = ~isempty(d_in);
+
+% Cannot specify both θ₀ and f/D
+if have_theta && have_fd
+    error('Specify only one of "theta0_deg" or "f_over_d".');
+end
+
+% ------------------------------
+% Conversion relationships
+% ------------------------------
+theta_from_fd = @(fd) 2*atand(1./(4*fd));
+fd_from_theta = @(th) 0.25 * cotd(th/2);
+
+% ------------------------------
+% Compute missing quantities
+% ------------------------------
+theta0_deg = NaN; f_over_d = NaN; f_m = NaN; d_m = NaN;
+
 if have_theta
-    theta0_deg = theta0_deg_in;
-    f_over_d   = 0.25 * cotd(theta0_deg / 2);
-    f_m = [];
-    d_m = [];
+    theta0_deg = theta0_in;
+    f_over_d   = fd_from_theta(theta0_deg);
+    if have_f
+        f_m = f_in;
+        d_m = f_m / f_over_d;
+    elseif have_d
+        d_m = d_in;
+        f_m = f_over_d * d_m;
+    end
 
-% -------------------------------------------------------------------------
-% CASE 2: f/D given
-% -------------------------------------------------------------------------
-elseif have_fD
-    f_over_d   = f_over_d_in;
-    theta0_deg = 2 * atand(1 / (4 * f_over_d));
-    f_m = [];
-    d_m = [];
+elseif have_fd
+    f_over_d   = fd_in;
+    theta0_deg = theta_from_fd(f_over_d);
+    if have_f
+        f_m = f_in;
+        d_m = f_m / f_over_d;
+    elseif have_d
+        d_m = d_in;
+        f_m = f_over_d * d_m;
+    end
 
-% -------------------------------------------------------------------------
-% CASE 3: f given (default D = 1.0 m)
-% -------------------------------------------------------------------------
-elseif have_f
-    d_m        = 1.0;           % fixed default diameter
-    f_m        = f_m_in;
-    f_over_d   = f_m / d_m;
-    theta0_deg = 2 * atand(1 / (4 * f_over_d));
+elseif have_f && have_d
+    f_m = f_in;
+    d_m = d_in;
+    f_over_d = f_m / d_m;
+    theta0_deg = theta_from_fd(f_over_d);
+
+else
+    error('Not enough information provided to compute geometry.');
 end
 
-% -------------------------------------------------------------------------
-% Display results
-% -------------------------------------------------------------------------
+% ------------------------------
+% Output summary
+% ------------------------------
 fprintf('---------------------------------------------\n');
 fprintf('Reflector Geometry (Balanis Eq. 15-25)\n');
 fprintf('---------------------------------------------\n');
-
-if have_theta
-    fprintf('Input: θ₀ = %.6f°\n', theta0_deg_in);
-elseif have_fD
-    fprintf('Input: f/D = %.8f\n', f_over_d_in);
-elseif have_f
-    fprintf('Input: f = %.6f m (default D = 1.0000 m used)\n', f_m_in);
-end
-
+if have_theta, fprintf('Input: θ₀ = %.6f°\n', theta0_in); end
+if have_fd,    fprintf('Input: f/D = %.8f\n', fd_in); end
+if have_f,     fprintf('Input: f = %.6f m\n', f_in); end
+if have_d,     fprintf('Input: D = %.6f m\n', d_in); end
 fprintf('---------------------------------------------\n');
-fprintf('Computed θ₀ = %.6f°\n', theta0_deg);
-fprintf('Computed f/D = %.8f\n', f_over_d);
-if have_f
-    fprintf('Default D = %.6f m\n', d_m);
-    fprintf('Focal length f = %.6f m\n', f_m);
-end
+fprintf('Computed θ₀   = %.6f°\n', theta0_deg);
+fprintf('Computed f/D  = %.8f\n', f_over_d);
+fprintf('Computed f    = %.6f m\n', f_m);
+fprintf('Computed D    = %.6f m\n', d_m);
 fprintf('---------------------------------------------\n');
-
 end

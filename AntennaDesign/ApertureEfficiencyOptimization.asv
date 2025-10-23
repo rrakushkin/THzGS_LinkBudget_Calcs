@@ -9,16 +9,16 @@
 % theta0 is the subtended angle (subtended angle measures from the vertix to the edge of dish)
 %------------------------------------------------------------------------------------------------------------%
 
-close all; clear; clc;
+clear; clc;
 %% General Antenna Parameters (F/D and or theta0)   
-%---set the subtended angle or the f/d ratio, then set f_m or d_m ---% 46.1
+%---set the subtended angle or the f/d ratio, then set f or d---%
 [theta0_deg, f_over_d, f_m, d_m] = BasicAntennaGeometry('theta0_deg', 46.1, 'd_m', 1);
 theta0 = deg2rad(theta0_deg);     % convert to radians
 prefactor = cot(theta0/2)^2;      % cot^2(theta0/2)
 
 %% Define Integrand and Aperture Efficiency
 % sqrt(Gf) = sqrt(n+1) * (cos θ')^(n/2)
-integrand = @(tp, n) sqrt(2*(n+1)) .* (cos(tp)).^(n/2) .* tan(tp/2);
+integrand = @(tp, n) sqrt(n+1) .* (cos(tp)).^(n/2) .* tan(tp/2);
 
 I_of_n = @(n) arrayfun(@(nn) ...
     integral(@(tp) integrand(tp, nn), 0, theta0, ...
@@ -26,7 +26,7 @@ I_of_n = @(n) arrayfun(@(nn) ...
 eff_ap = @(n) prefactor .* abs(I_of_n(n)).^2;
 
 %% Sweep n and Evaluate
-n_min = 0; n_max = 10; Npts = 601;
+n_min = 0; n_max = 60; Npts = 601;
 n_vec = linspace(n_min, n_max, Npts);
 eff_vec = eff_ap(n_vec);
 
