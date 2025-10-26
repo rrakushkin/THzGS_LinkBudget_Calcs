@@ -62,7 +62,7 @@ xlim([n_min n_max]);
 
 %% Plot G_f(θ) at n = n_opt over [0, θ0]
 theta = linspace(0, theta0, 800);           % radians
-Gf_opt = (n_opt + 1) .* (cos(theta)).^n_opt;
+Gf_opt = 2*(n_opt + 1) .* (cos(theta)).^n_opt;
 
 figure;
 plot(rad2deg(theta), Gf_opt, 'LineWidth', 1.8); hold on;
@@ -96,10 +96,41 @@ title('HPBW of Feed Pattern (cos^n model)');
 text(n_opt + 1, HPBW_deg_opt, sprintf('n_{opt}=%.2f, HPBW=%.2f^\\circ', ...
      n_opt, HPBW_deg_opt), 'Color', 'r', 'Interpreter', 'tex');
 %% Find Horn Dimensions for Determined HPBW
-[ApE,ApH,Le,Lh] = FindHornDimensions(theta_HP_deg,theta_HP_deg);
+a_m = 1.092e-3;
+b_m = 0.546e-3;
+freq_Hz = 225e9;
+HornGain = 2*(n_opt+1)
+[chiVal, rho_eVal, rho_hVal, a1Val, b1Val, P_eVal, P_hVal] = FindHornDimensions(HornGain, a_m, b_m, freq_Hz)
+
+h1 = sqrt(rho_eVal^2 - (b1Val/2)^2)
+h2 = sqrt(rho_hVal^2 - (a1Val/2)^2)
+
+H1 = h1*P_eVal/rho_eVal
+H2 = h2*P_hVal/rho_hVal
+
+%sol = solve([H/h==P_hVal/rho_1, H/h==P_eVal/rho_2],[H,h]);
+
+
+fprintf('\n---------------------------------------------');
 fprintf('\n---------------------------------------------\n');
-fprintf('Aperture (E-plane): %.4f mm\n', ApE*1e3);
-fprintf('Aperture (H-plane): %.4f mm\n', ApH*1e3);
-fprintf('Horn Length (E-plane): %.4f mm\n', Le*1e3);
-fprintf('Horn Length (H-plane): %.4f mm\n', Lh*1e3);
+fprintf('Horn Dimensions\n');
+fprintf('---------------------------------------------\n');
+fprintf('a = WG (E-plane)\n');
+fprintf('b = WG (H-plane)\n');
+fprintf('a1 = Aperture (E-plane)\n');
+fprintf('b1 = Aperture (H-plane)\n');
+fprintf('rho_e = Cone Slant Length from peak (E-plane)\n');
+fprintf('rho_h = Cone Slant Length from peak (H-plane)\n');
+fprintf('P_e = Cone Slant Length from a (E-plane)\n');
+fprintf('P_h = Cone Slant Length from b (H-plane)\n');
+fprintf('***Note P_e and P_h should be equal***\n')
+fprintf('---------------------------------------------\n');
+fprintf('a: %.4f mm\n', a_m*1e3);
+fprintf('b: %.4f mm\n', b_m*1e3);
+fprintf('a1: %.4f mm\n', a1Val*1e3);
+fprintf('b1: %.4f mm\n', b1Val*1e3);
+fprintf('rho_e %.4f mm\n', rho_eVal*1e3);
+fprintf('rho_h: %.4f mm\n', rho_hVal*1e3);
+fprintf('P_e %.4f mm\n', P_eVal*1e3);
+fprintf('P_h: %.4f mm\n', P_hVal*1e3);
 fprintf('---------------------------------------------\n');
