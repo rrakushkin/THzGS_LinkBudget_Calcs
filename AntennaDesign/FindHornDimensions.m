@@ -10,7 +10,7 @@ function [chi, rho_e, rho_h, a1, b1, p_e, p_h] = FindHornDimensions(G0_in, a_in,
 % - Real solutions require a1>a and b1>b and the square-root arguments >0.
 
 c = physconst('LightSpeed');
-lambda = c/freq_Hz;
+lambda = c/freq_Hz
 G0_lin = 10.^(G0_in/10);
 %G0_lin = G0_in
 % -------- solve for chi (other terms depend on this value)

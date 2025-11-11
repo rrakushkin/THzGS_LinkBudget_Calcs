@@ -1,0 +1,9 @@
+Read Me File
+
+Ground System aims to optimize for the best trade off between antenna gain and pointing stringency. Therefore, the geff_gsAnt variable may change (various values are included in this link budget). Additionally, gs_ptg_error_loss reflects the loss due to +/- 0.05 deg pointing of gs antenna when the antenna has effective gain of 58.9 dBi roughly. The pointing  error loss drastically increases for larger gain antennas when holding pointing error constant. 
+
+There are other variables who's values are not 100% certain and accurate, rough estimates are included for these values. These are the GS_feed_network_loss and GS_radome
+
+
+ITU reference used for finding atmospheric attenuation over Boston: https://www.itu.int/dms_pubrec/itu-r/rec/p/R-REC-P.835-7-202408-I%21%21PDF-E.pdf 
+

@@ -22,9 +22,12 @@ function p_rx_dbm = linkBudget_FullVersion(p_tx_dbm, g_sat, directivity_g, gsHPB
     
     % Connector Losses (Coax loss (IF) + Waveguide loss (Carrier))
     
-    w_l = 0.04 * wg_length_mm; %online sources indicate around 0.03 dB loss per mm 
-    cx_l = 0.11 * cx_length_m; %online sources indicate around 0.25 dB loss per m for 2 GHz (LMR-400) 
-    con_l = w_l + cx_l + sw_l; %(dB)
+    %w_l = 0.04 * wg_length_mm; %online sources indicate around 0.03 dB loss per mm 
+    %cx_l = 0.11 * cx_length_m; %online sources indicate around 0.25 dB loss per m for 2 GHz (LMR-400) 
+    %con_l = w_l + cx_l + sw_l; %(dB)
+
+    implementation_loss = 1;
+    con_l = implementation_loss;
 
     % Spreading loss
     %disp(distance)

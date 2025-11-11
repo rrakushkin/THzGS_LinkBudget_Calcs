@@ -1,0 +1,55 @@
+% solve_a1_b1_from_G0.m
+% Find all (a1, b1) pairs with G0_dB = 12.02 dBi satisfying:
+%   G0 = (1/2)*(4*pi/lambda^2)*(a1*b1)
+% Subject to: a1 > 1.092e-3, b1 > 2.1891
+% (If you intended millimeters for b1_min, change to 2.1891e-3.)
+
+clear;
+
+%% User inputs
+f_Hz   = 225e9;         % operating frequency (change if needed)
+G0  = 12.02;         % target G0 in dBi
+a1_min = 1.092e-3;      % meters
+b1_min = 0.5e-3;        % meters  
+N      = 300;           % number of samples along the feasible locus (if any)
+
+%% Constants and required aperture area product
+c       = 299792458;                % m/s
+lambda  = c / f_Hz;                 % m
+G0_lin  = G0;            % linear
+A_req   = (2*G0_lin * lambda^2) / (4*pi);   % required product a1*b1
+
+fprintf('lambda = %.6e m\n', lambda);
+fprintf('G0 (linear) = %.6f\n', G0_lin);
+fprintf('Required a1*b1 = %.6e m^2\n', A_req);
+
+%% Feasibility check
+min_product = a1_min * b1_min;
+if min_product > A_req
+    fprintf(['No feasible (a1,b1): min constraints force a1*b1 = %.6e > required %.6e.\n' ...
+             'Increase G0_dB or relax a1_min/b1_min.\n'], min_product, A_req);
+    solutions = [];  %#ok<NASGU>
+    return;
+end
+
+%% Feasible locus (hyperbola) with bounds
+% For any chosen b1 in [b1_min, A_req/a1_min], a1 is fixed by a1 = A_req / b1
+b1_max = A_req / a1_min;
+b1_vec = linspace(b1_min, b1_max, N);
+a1_vec = A_req ./ b1_vec;
+
+% (Numerical guard for strict-inequality if desired)
+mask   = (a1_vec > a1_min) & (b1_vec > b1_min);
+a1_vec = a1_vec(mask);
+b1_vec = b1_vec(mask);
+
+solutions = [a1_vec(:), b1_vec(:)];   % Nx2 list of valid pairs
+fprintf('Found %d solution pairs.\n', size(solutions,1));
+fprintf('a1 range: [%.6e, %.6e] m\n', min(a1_vec), max(a1_vec));
+fprintf('b1 range: [%.6e, %.6e] m\n', min(b1_vec), max(b1_vec));
+
+%% Optional: plot the locus and bounds
+figure; plot(b1_vec, a1_vec, 'LineWidth', 1.5);
+hold on; xline(b1_min,'--'); yline(a1_min,'--');
+grid on; xlabel('b_1 [m]'); ylabel('a_1 [m]');
+title('Feasible (a_1,b_1) satisfying G_0 target');

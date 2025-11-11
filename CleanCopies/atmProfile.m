@@ -1,0 +1,210 @@
+function [T, P, e] = atmProfile(h, atm)
+    %ATMPROFILE Provides expressions and data for reference standard atmospheres from Rec. ITU-R P.835. 
+    %The following sections provide simple seasonal reference atmospheres for low (15° N), mid (45° N),and high (60° N) northern hemisphere latitude regimes.
+    %
+    % Input:
+    %   h      [km] Geometric height. VALID RANGE: (0, 100) km.
+    %   atm    "globalAnnual", "lowAnnual", "midSummer", "midWinter", "highSummer", "highWinter".
+    %
+    % Output:
+    %   T      [K] Temperature.
+    %   P      [hPa] Pressure.
+    %   e      [hPa] Water-vapor pressure.
+
+    nHeight = numel(h);
+
+    T = zeros(1, nHeight); % [K] Temperature.
+    P = zeros(1, nHeight); % [hPa] Pressure.
+
+
+    switch atm
+        case "globalAnnual" % Mean annual global reference atmosphere.
+
+            hh = 6356.766 * h ./ (6356.766 + h); % [km'] Geopotential height.
+
+            range1 = hh >= 0 & hh <= 11;
+            range2 = hh > 11 & hh <= 20;
+            range3 = hh > 20 & hh <= 32;
+            range4 = hh > 32 & hh <= 47;
+            range5 = hh > 47 & hh <= 51;
+            range6 = hh > 51 & hh <= 71;
+            range7 = hh > 71 & hh <= 84.852;
+            range8 = hh > 84.852 & hh <= 89.716;
+            range9 = hh > 89.716 & hh <= 98.452;
+
+            T(range1) = 288.15 - 6.5 * hh(range1);
+            T(range2) = 216.65;
+            T(range3) = 216.65 + (hh(range3) - 20);
+            T(range4) = 228.65 + 2.8 * (hh(range4) - 32);
+            T(range5) = 270.65;
+            T(range6) = 270.65 - 2.8 * (hh(range6) - 51);
+            T(range7) = 214.65 - 2.0 * (hh(range7) - 71);
+            T(range8) = 186.8673;
+            T(range9) = 263.1905 - 76.3232 * sqrt(1 - ((h(range9) - 91) / 19.9429) .^ 2);
+
+            P(range1) = 1013.25 * (288.15 ./ T(range1)) .^ (-34.1632 / 6.5);
+            P(range2) = 226.3226 * exp(-34.1632 * (hh(range2) - 11) ./ T(range2));
+            P(range3) = 54.74980 * (216.65 ./ T(range3)) .^ 34.1632;
+            P(range4) = 8.680422 * (228.65 ./ T(range4)) .^ (34.1632 / 2.8);
+            P(range5) = 1.109106 * exp(-34.1632 * (hh(range5) - 47) ./ T(range5));
+            P(range6) = 0.6694167 * (270.65 ./ T(range6)) .^ (-34.1632 / 2.8);
+            P(range7) = 0.03956649 * (214.65 ./ T(range7)) .^ (-34.1632 / 2.0);
+            P(range8 | range9) = exp(polyval([1.340543e-6, -4.789660e-4, 6.424731e-2, -4.011801, 95.571899], h(range8 | range9)));
+
+            rho = 7.5 * exp(-h / 2); % [g/m^3] Water-vapor density.
+
+        case "Annual 15" % Low-latitude annual reference atmosphere.
+
+            rangeT1 = h >=  0 & h < 17;
+            rangeT2 = h >= 17 & h < 47;
+            rangeT3 = h >= 47 & h < 52;
+            rangeT4 = h >= 52 & h < 80;
+            rangeT5 = h >= 80 & h <= 100;
+
+            rangeP1 = h >= 0 & h <= 10;
+            rangeP2 = h > 10 & h <= 72;
+            rangeP3 = h > 72 & h <= 100;
+
+            T(rangeT1) = 300.4222 - 6.3533 * h(rangeT1) + 0.005886 * h(rangeT1) .^ 2;
+            T(rangeT2) = 194 + 2.533 * (h(rangeT2) - 17);
+            T(rangeT3) = 270;
+            T(rangeT4) = 270 - 3.0714 * (h(rangeT4) - 52);
+            T(rangeT5) = 184;
+
+            P10 = 1012.0306 - 109.0338e1 + 3.6316e2;
+            P72 = P10 * exp(-0.147 * (72 - 10));
+
+            P(rangeP1) = 1012.0306 - 109.0338 * h(rangeP1) + 3.6316 * h(rangeP1) .^ 2;
+            P(rangeP2) = P10 * exp(-0.147 * (h(rangeP2) - 10));
+            P(rangeP3) = P72 * exp(-0.165 * (h(rangeP3) - 72));
+
+            rho = 19.6542 * exp(polyval([-0.0005923, 0.01351, -0.1122, -0.2313, 0], h)); % [g/m^3] Water-vapor density.
+            rho(h > 15) = 0;
+
+        case "Summer 45" % Summer mid-latitude reference atmosphere.
+
+            rangeT1 = h >=  0 & h < 13;
+            rangeT2 = h >= 13 & h < 17;
+            rangeT3 = h >= 17 & h < 47;
+            rangeT4 = h >= 47 & h < 53;
+            rangeT5 = h >= 53 & h < 80;
+            rangeT6 = h >= 80 & h <= 100;
+
+            rangeP1 = h >= 0 & h <= 10;
+            rangeP2 = h > 10 & h <= 72;
+            rangeP3 = h > 72 & h <= 100;
+
+            T(rangeT1) = 294.9838 - 5.2159 * h(rangeT1) - 0.07109 * h(rangeT1) .^ 2;
+            T(rangeT2) = 215.15;
+            T(rangeT3) = 215.15 * exp(0.008128 * (h(rangeT3) - 17));
+            T(rangeT4) = 275;
+            T(rangeT5) = 275 + 20 * (1 - exp(0.06 * (h(rangeT5) - 53)));
+            T(rangeT6) = 175;
+
+            P10 = 1012.8186 - 111.5569e1 + 3.8646e2;
+            P72 = P10 * exp(-0.147 * (72 - 10));
+
+            P(rangeP1) = 1012.8186 - 111.5569 * h(rangeP1) + 3.8646 * h(rangeP1) .^ 2;
+            P(rangeP2) = P10 * exp(-0.147 * (h(rangeP2) - 10));
+            P(rangeP3) = P72 * exp(-0.165 * (h(rangeP3) - 72));
+
+            rho = 14.3542 * exp(polyval([0.001007, -0.02290, -0.4174, 0], h)); % [g/m^3] Water-vapor density.
+            rho(h > 15) = 0;
+
+        case "Winter 45" % Winter mid-latitude reference atmosphere.
+
+            rangeT1 = h >=  0 & h < 10;
+            rangeT2 = h >= 10 & h < 33;
+            rangeT3 = h >= 33 & h < 47;
+            rangeT4 = h >= 47 & h < 53;
+            rangeT5 = h >= 53 & h < 80;
+            rangeT6 = h >= 80 & h <= 100;
+
+            rangeP1 = h >= 0 & h <= 10;
+            rangeP2 = h > 10 & h <= 72;
+            rangeP3 = h > 72 & h <= 100;
+
+            T(rangeT1) = 272.7241 - 3.6217 * h(rangeT1) - 0.1759 * h(rangeT1) .^ 2;
+            T(rangeT2) = 218;
+            T(rangeT3) = 218 + 3.3571 * (h(rangeT3) - 33);
+            T(rangeT4) = 265;
+            T(rangeT5) = 265 - 2.0370 * (h(rangeT5) - 53);
+            T(rangeT6) = 210;
+
+            P10 = 1018.8627 - 124.2954e1 + 4.8307e2;
+            P72 = P10 * exp(-0.147 * (72 - 10));
+
+            P(rangeP1) = 1018.8627 - 124.2954 * h(rangeP1) + 4.8307 * h(rangeP1) .^ 2;
+            P(rangeP2) = P10 * exp(-0.147 * (h(rangeP2) - 10));
+            P(rangeP3) = P72 * exp(-0.155 * (h(rangeP3) - 72));
+
+            rho = 3.4742 * exp(polyval([0.0004489, -0.03604, -0.2697, 0], h)); % [g/m^3] Water-vapor density.
+            rho(h > 10) = 0;
+
+        case "Summer 60" % Summer high-latitude reference atmosphere.
+
+            rangeT1 = h >=  0 & h < 10;
+            rangeT2 = h >= 10 & h < 23;
+            rangeT3 = h >= 23 & h < 48;
+            rangeT4 = h >= 48 & h < 53;
+            rangeT5 = h >= 53 & h < 79;
+            rangeT6 = h >= 79 & h <= 100;
+
+            rangeP1 = h >= 0 & h <= 10;
+            rangeP2 = h > 10 & h <= 72;
+            rangeP3 = h > 72 & h <= 100;
+
+            T(rangeT1) = 286.8374 - 4.7805 * h(rangeT1) - 0.1402 * h(rangeT1) .^ 2;
+            T(rangeT2) = 225;
+            T(rangeT3) = 225 * exp(0.008317 * (h(rangeT3) - 23));
+            T(rangeT4) = 277;
+            T(rangeT5) = 277 - 4.0769 * (h(rangeT5) - 53);
+            T(rangeT6) = 171;
+
+            P10 = 1008.0278 - 113.2494e1 + 3.9408e2;
+            P72 = P10 * exp(-0.140 * (72 - 10));
+
+            P(rangeP1) = 1008.0278 - 113.2494 * h(rangeP1) + 3.9408 * h(rangeP1) .^ 2;
+            P(rangeP2) = P10 * exp(-0.140 * (h(rangeP2) - 10));
+            P(rangeP3) = P72 * exp(-0.165 * (h(rangeP3) - 72));
+
+            rho = 8.988 * exp(polyval([-0.001955, -0.005402, -0.3614, 0], h)); % [g/m^3] Water-vapor density.
+            rho(h > 15) = 0;
+
+        case "Winter 60" % Winter high-latitude reference atmosphere.
+
+            rangeT1 = h >=  0 & h < 8.5;
+            rangeT2 = h >= 8.5 & h < 30;
+            rangeT3 = h >= 30 & h < 50;
+            rangeT4 = h >= 50 & h < 54;
+            rangeT5 = h >= 54 & h <= 100;
+
+            rangeP1 = h >= 0 & h <= 10;
+            rangeP2 = h > 10 & h <= 72;
+            rangeP3 = h > 72 & h <= 100;
+
+            T(rangeT1) = 257.4345 + 2.3474 * h(rangeT1) - 1.5479 * h(rangeT1) .^ 2 + 0.08473 * h(rangeT1) .^ 3;
+            T(rangeT2) = 217.5;
+            T(rangeT3) = 217.5 + 2.125 * (h(rangeT3) - 30);
+            T(rangeT4) = 260;
+            T(rangeT5) = 260 - 1.667 * (h(rangeT5) - 54);
+
+            P10 = 1010.8828 - 122.2411e1 + 4.554e2;
+            P72 = P10 * exp(-0.147 * (72 - 10));
+
+            P(rangeP1) = 1010.8828 - 122.2411 * h(rangeP1) + 4.554 * h(rangeP1) .^ 2;
+            P(rangeP2) = P10 * exp(-0.147 * (h(rangeP2) - 10));
+            P(rangeP3) = P72 * exp(-0.150 * (h(rangeP3) - 72));
+
+            rho = 1.2319 * exp(polyval([0.00281, -0.0981, 0.07481, 0], h)); % [g/m^3] Water-vapor density.
+            rho(h > 10) = 0;
+
+
+        otherwise
+            error("Choose a valid atmospheric profile.");
+    end
+
+    e = rho .* T / 216.7; % [hPa] Water-vapor pressure.
+    r = (e ./ P < 2e-6); % Mixing ratio.
+    e(r) = 2e-6 * P(r);
+end

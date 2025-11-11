@@ -14,16 +14,16 @@ geff_satAnt   = 44;        % [dBi]
 directivity_gsAnt = [55,55.5,56,57,58,61,62];   % [dBi]
 freq          = 225;       % [GHz]
 freq_Hz       = freq * 1e9;
-targetBER     = 1e-4;       %= 10^(-4)
+targetBER     = 1e-5;       %= 10^(-4)
 rolloff       = 0.3;
-BW       = 65e6;             %[Hz] 130 MHz = 100 Mbps
-NF       = 8;               %[dB]
+BW       = 130e6;             %[Hz] 130 MHz = 100 Mbps
+NF       = 7;               %[dB]
 
 % ---- Geometry ----
 HOSL = 18e-3;              % [km] (Conservative Value; GS height above sea level)
-alt  = 416;                % [km] 
-Elev = linspace(0,90,100); % [deg]
-
+alt  = 550;                % [km] 
+%Elev = linspace(0,90,100); % [deg]
+Elev = 66;
 % ---- Atmospheres ----
 hstep    = 0.1;            % [km]
 gs_lat   = 42.3378054237531; % Egan Roof
@@ -55,7 +55,7 @@ GS_pos      = Re + HOSL;
 GS_pos_m      = GS_pos*1e3;
 alt_m = alt*1e3;
 slant_dist_m  = sqrt(GS_pos_m.^2 .* sind(Elev).^2 + 2*GS_pos_m*alt_m + alt_m.^2) ...
-              - GS_pos_m .* sind(Elev)                   % [m]
+              - GS_pos_m .* sind(Elev)  ;                 % [m]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % FORMATTING
 figure

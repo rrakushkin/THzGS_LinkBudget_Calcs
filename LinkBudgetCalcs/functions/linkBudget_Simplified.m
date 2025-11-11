@@ -1,6 +1,4 @@
 function p_rx_dbm = linkBudget_Simplified(p_tx_dbm, g_sat, g_dish, f_c, distance, l_abs)
-    % LINKBUDGET (insert description)
-    %
     % Input:
     %   p_tx_dbm   [dBm]     
     %   f_c        [Hz]
@@ -11,7 +9,7 @@ function p_rx_dbm = linkBudget_Simplified(p_tx_dbm, g_sat, g_dish, f_c, distance
   
     
     % Spreading loss
-    l_spr = 20*log10(distance * 1e-3) + 20*log10(f_c * 1e-9) + 92.45;
+    l_spr = 20*log10(distance) + 20*log10(f_c) + 32.45
 
 
     p_rx_dbm = p_tx_dbm + g_sat + g_dish - l_spr - l_abs;

@@ -12,7 +12,7 @@
 close all; clear; clc;
 %% General Antenna Parameters (F/D and or theta0)   
 %---set the subtended angle or the f/d ratio, then set f_m or d_m ---% 46.1
-[theta0_deg, f_over_d, f_m, d_m] = BasicAntennaGeometry('theta0_deg', 36.4, 'd_m', 1.7)
+[theta0_deg, f_over_d, f_m, d_m] = BasicAntennaGeometry('theta0_deg', 46.1, 'd_m', 1);
 theta0 = deg2rad(theta0_deg);     % convert to radians
 prefactor = cot(theta0/2)^2;      % cot^2(theta0/2)
 
@@ -26,7 +26,7 @@ I_of_n = @(n) arrayfun(@(nn) ...
 eff_ap = @(n) prefactor .* abs(I_of_n(n)).^2;
 
 %% Sweep n and Evaluate
-n_min = 0; n_max = 20; Npts = 601;
+n_min = 0; n_max = 10; Npts = 601;
 n_vec = linspace(n_min, n_max, Npts);
 eff_vec = eff_ap(n_vec);
 
@@ -99,7 +99,7 @@ text(n_opt + 1, HPBW_deg_opt, sprintf('n_{opt}=%.2f, HPBW=%.2f^\\circ', ...
 a_m = 1.092e-3;
 b_m = 0.546e-3;
 freq_Hz = 225e9;
-HornGain = 2*(n_opt+1) %is this dB? (original eq.? mb? bc i used it in FindHornDimensions and there I convert this to linear)
+HornGain = 2*(n_opt+1)
 [chiVal, rho_eVal, rho_hVal, a1Val, b1Val, P_eVal, P_hVal] = FindHornDimensions(HornGain, a_m, b_m, freq_Hz)
 
 

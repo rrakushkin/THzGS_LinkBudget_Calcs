@@ -10,36 +10,36 @@ T0      = 290;
 c       = physconst('LightSpeed');
 
 % ---- Link budget params ----
-sat_tx        = 23;        % [dBm]
-geff_satAnt   = 44;        % [dBi]
+sat_tx        = 25%24.98;        % [dBm]
+geff_satAnt   = 45;        % [dBi]
 %geff_gsAnt    = 65;        % [dBi]
-directivity_gsAnt = [68,69,70,71,72];   % [dBi]
-numElem       = 16;       % satellite array (num per length)
-distElem      = 0.0045;    % [m]
-D             = 1.5;       % [m]
-surface_rms   = 70;       % [um]
+directivity_gsAnt = [58.2, 58.2, 58.2, 58.2,58.2,58.2] %[62,68,69,70,71,72];   % [dBi]
+numElem       = 0%16;       % satellite array (num per length)
+distElem      = 0%0.0045;    % [m]
+D             = 0%1.5;       % [m]
+surface_rms   = 0%70;       % [um]
 freq          = 225;       % [GHz]
 freq_Hz       = freq * 1e9;
 gs_pol_type   = 'linear';
-pol_angle     = 5;        % [deg]
-gs_ptg_error  = 0.04;      % [deg]
-sat_ptg_error = 0.2;       % [deg]
-wg_len_mm     = 25.4;         % [mm]
-cx_len_m      = 4;         % [m]
-sw_l = 1.25;
-rdm_l = 1;
+pol_angle     = 45%5;        % [deg]
+gs_ptg_error  = 0%0.04;      % [deg]
+sat_ptg_error = 0%0.2;       % [deg]
+wg_len_mm     = 0%25.4;         % [mm]
+cx_len_m      = 0%4;         % [m]
+sw_l = 0%1.25;
+rdm_l = 0%1;
 targetBER     = 1e-4;
 rolloff       = 0.3;
 
 % ---- Geometry ----
 HOSL = 37e-3;              % [km] (GS height above sea level)
-alt  = 460;                % [km] 
+alt  = 416;                % [km] 
 Elev = linspace(0,90,100); % [deg]
 
 % ---- Atmospheres ----
 hstep    = 0.1;            % [km]
 gs_lat   = 42.3378054237531;
-atmType = "InterpSummer"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer"];
+atmType = "InterpWinter"; %["Summer 45","Winter 45","Annual 15","InterpWinter","InterpSummer"];
 
 % ---- GS Noise Profiles ----
 [T1,P1,e1]     = atmProfile(HOSL,"Annual 15");
@@ -49,7 +49,7 @@ T_gs_s = max(gs_s, 300)
 %[T2W,P2W,e2W]  = atmProfile(HOSL,"Winter 45");
 %[gs_Tw]     = InterpAtm({T1,P1,e1},{T2W,P2W,e2W},gs_lat);
 BW       = 130e6;             %[Hz] 130 MHz = 100 Mbps
-NF       = 8;       % [dB]
+NF       = 7;       % [dB]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PRECOMPUTATIONS
 
@@ -139,8 +139,8 @@ for k = 1:numel(directivity_gsAnt)
 
     plot(Elev, linkMargin, 'LineWidth', 1.5,'Color', colors(k,:), ...
          'DisplayName', sprintf('%.0f dBi', directivity_gsAnt(k)));
-     if directivity_gsAnt(k) == 72
-         hline = yline(3, 'Color', 'black', 'LineStyle','--', ...
+     if directivity_gsAnt(k) == directivity_gsAnt(end)
+         hline = yline(6, 'Color', 'black', 'LineStyle','--', ...
              'LineWidth', 3, 'DisplayName', '3 dB');
      end
 %end 
